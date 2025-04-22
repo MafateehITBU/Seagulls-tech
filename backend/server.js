@@ -3,6 +3,15 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+import adminRoutes from './routes/adminRoutes.js';
+import techRoutes from './routes/techRoutes.js';
+import vendorRoutes from './routes/vendorRoutes.js';
+import assetRoutes from './routes/assetRoutes.js';
+import sparePartRoutes from './routes/sparePartRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import cleaningRoutes from './routes/cleaningRoutes.js';
+import maintenanceRoutes from './routes/maintenanceRoutes.js';
+
 // Load environment variables
 dotenv.config();
 
@@ -13,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/seagulls-tech')
+mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
@@ -21,6 +30,16 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/seagulls-
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Seagulls Tech API' });
 });
+
+
+app.use('/api/admin', adminRoutes); // Admin routes
+app.use('/api/tech', techRoutes); // Tech routes
+app.use('/api/asset', assetRoutes); // Asset routes
+app.use('/api/vendor', vendorRoutes); // Vendor routes
+app.use('/api/sparepart', sparePartRoutes); // Spare part routes
+app.use('/api/report', reportRoutes); // Report routes
+app.use('/api/cleaning', cleaningRoutes); // Cleaning routes
+app.use('/api/maintenance', maintenanceRoutes); // Maintenance routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
