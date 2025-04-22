@@ -1,4 +1,4 @@
-import Maintenance from "../models/Maintenance.js";
+import Accident from "../models/Accident.js";
 import Ticket from "../models/Ticket.js";
 import Report from "../models/Report.js";
 import SparePart from "../models/SparePart.js";
@@ -9,12 +9,12 @@ import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 /**------------------------------------------
- * @desc Create a new maintenance record
- * @route POST /api/maintenance
+ * @desc Create a new accident record
+ * @route POST /api/accident
  * @access Private
  * @role Tech, Admin, Super Admin
  -------------------------------------------*/
-export const createMaintenanceTicket = async (req, res) => {
+export const createAccidentTicket = async (req, res) => {
     try {
         const openedBy = req.user.id;
         const openedByModel = req.user.position === 'tech' ? 'Tech' : 'Admin';
@@ -88,20 +88,25 @@ export const createMaintenanceTicket = async (req, res) => {
 
         const createdTicket = await newTicket.save();
 
-        // Create the maintenance
-        const maintenance = new Maintenance({
+        // Create the accident record
+        const accident = new Accident({
             ticketId: createdTicket._id,
             requireSpareParts,
             spareParts,
             reportId: null,
+            croca: {
+                crocaType: req.body.crocaType || "Croca",
+                cost: req.body.cost || "0",
+                photo: null,
+            },
             status: 'Pending',
         });
 
-        const createdMaintenance = await maintenance.save();
+        const createdAccident = await accident.save();
 
         res.status(201).json({
-            message: "Maintenance created successfully",
-            maintenance: createdMaintenance,
+            message: "Accident Ticket created successfully!",
+            accident: createdAccident,
         });
     } catch (error) {
         console.error(error);
@@ -110,14 +115,14 @@ export const createMaintenanceTicket = async (req, res) => {
 };
 
 /**------------------------------------------
- * @desc Get all maintenance tickets Open / In Progress
- * @route GET /api/maintenance
+ * @desc Get all accident tickets Open / In Progress
+ * @route GET /api/accident
  * @access Private
  * @role Admin, Super Admin
  -------------------------------------------*/
-export const getAdminMaintenanceTickets = async (req, res) => {
+export const getAdminAccidentTickets = async (req, res) => {
     try {
-        const maintenances = await Maintenance.find({ status: { $in: ['Open', 'Pending', 'In Progress'] } })
+        const accidents = await Accident.find({ status: { $in: ['Open', 'Pending', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
                 select: 'openedBy assignedTo priority assetId description status openedByModel',
@@ -129,22 +134,22 @@ export const getAdminMaintenanceTickets = async (req, res) => {
                 ],
             });
 
-        if (!maintenances || maintenances.length === 0) {
-            return res.status(404).json({ message: "No maintenance tickets found" });
+        if (!accidents || accidents.length === 0) {
+            return res.status(404).json({ message: "No Accident tickets found" });
         }
 
         // Convert to plain objects and populate reports
-        let populatedMaint = await Promise.all(maintenances.map(async (maint) => {
-            const maintObj = maint.toObject();
-            if (maintObj.reportId) {
-                const report = await Report.findById(maintObj.reportId);
-                maintObj.reportId = report;
+        let populatedAccident = await Promise.all(accidents.map(async (accident) => {
+            const accidentObj = accident.toObject();
+            if (accidentObj.reportId) {
+                const report = await Report.findById(accidentObj.reportId);
+                accidentObj.reportId = report;
             }
-            return maintObj;
+            return accidentObj;
         }));
 
         // Gather all spare part IDs
-        const sparePartIds = populatedMaint.flatMap(m => m.spareParts || []);
+        const sparePartIds = populatedAccident.flatMap(a => a.spareParts || []);
         const spareParts = await SparePart.find({ _id: { $in: sparePartIds } });
 
         // Create a map of spare part names
@@ -154,13 +159,13 @@ export const getAdminMaintenanceTickets = async (req, res) => {
         });
 
         // Replace spare part IDs with names
-        populatedMaint = populatedMaint.map(m => {
-            m.spareParts = (m.spareParts || []).map(spId => sparePartsMap[spId.toString()] || "Unknown");
-            return m;
+        populatedAccident = populatedAccident.map(a => {
+            a.spareParts = (a.spareParts || []).map(spId => sparePartsMap[spId.toString()] || "Unknown");
+            return a;
         });
 
 
-        res.status(200).json(populatedMaint);
+        res.status(200).json(populatedAccident);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -168,14 +173,14 @@ export const getAdminMaintenanceTickets = async (req, res) => {
 };
 
 /**------------------------------------------
- * @desc Get all maintenance tickets Closed
- * @route GET /api/maintenance/closed
+ * @desc Get all accident tickets Closed
+ * @route GET /api/accident/closed
  * @access Private
  * @role Admin, Super Admin
  * -------------------------------------------*/
-export const getClosedMaintTickets = async (req, res) => {
+export const getClosedAccidentTickets = async (req, res) => {
     try {
-        const maintenances = await Maintenance.find({ status: 'Closed' })
+        const accidents = await Accident.find({ status: 'Closed' })
             .populate({
                 path: 'ticketId',
                 select: 'openedBy assignedTo priority assetId description status openedByModel',
@@ -194,19 +199,19 @@ export const getClosedMaintTickets = async (req, res) => {
                     },
                 ],
             });
-        if (!maintenances || maintenances.length === 0) {
-            return res.status(404).json({ message: "No closed maintenance tickets found" });
+        if (!accidents || accidents.length === 0) {
+            return res.status(404).json({ message: "No closed Accident tickets found" });
         }
-        let populatedMaint = await Promise.all(maintenances.map(async (maint) => {
-            if (maint.reportId) {
-                const report = await Report.findById(maint.reportId);
-                maint.reportId = report;
+        let populatedAccident = await Promise.all(accidents.map(async (accident) => {
+            if (accident.reportId) {
+                const report = await Report.findById(accident.reportId);
+                accident.reportId = report;
             }
-            return maint;
+            return accident;
         }));
 
         // Gather all spare part IDs
-        const sparePartIds = populatedMaint.flatMap(m => m.spareParts || []);
+        const sparePartIds = populatedAccident.flatMap(a => a.spareParts || []);
         const spareParts = await SparePart.find({ _id: { $in: sparePartIds } });
 
         // Create a map of spare part names
@@ -216,12 +221,12 @@ export const getClosedMaintTickets = async (req, res) => {
         });
 
         // Replace spare part IDs with names
-        populatedMaint = populatedMaint.map(m => {
-            m.spareParts = (m.spareParts || []).map(spId => sparePartsMap[spId.toString()] || "Unknown");
-            return m;
+        populatedAccident = populatedAccident.map(a => {
+            a.spareParts = (a.spareParts || []).map(spId => sparePartsMap[spId.toString()] || "Unknown");
+            return a;
         });
 
-        res.json(populatedMaint);
+        res.json(populatedAccident);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -229,12 +234,12 @@ export const getClosedMaintTickets = async (req, res) => {
 }
 
 /**------------------------------------------
- * @desc Get all Open and In Progress maintenance tickets assigned to the logged-in Tech
- * @route GET /api/maintenance/tech/:id
+ * @desc Get all Open and In Progress accident tickets assigned to the logged-in Tech
+ * @route GET /api/accident/tech/:id
  * @access Private
  * @role Tech
  * -------------------------------------------*/
-export const getMaintTicketsTech = async (req, res) => {
+export const getAccidentTicketsTech = async (req, res) => {
     try {
         const id = req.user.id;
 
@@ -244,8 +249,8 @@ export const getMaintTicketsTech = async (req, res) => {
             return res.status(404).json({ message: "Tech not found" });
         }
 
-        // Fetch open or in-progress maint tickets and populate related fields
-        const maints = await Maintenance.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
+        // Fetch open or in-progress accident tickets and populate related fields
+        const accidents = await Accident.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
                 select: 'openedBy assignedTo priority assetId description status openedByModel',
@@ -265,26 +270,26 @@ export const getMaintTicketsTech = async (req, res) => {
                 ],
             });
 
-        if (!maints || maints.length === 0) {
-            return res.status(404).json({ message: "No maint tickets found" });
+        if (!accidents || accidents.length === 0) {
+            return res.status(404).json({ message: "No accident tickets found" });
         }
 
         // Filter by assigned tech
-        const filteredMaints = maints.filter(maint => {
-            const assignedTo = maint.ticketId?.assignedTo?._id || maint.ticketId?.assignedTo;
+        const filteredAccidents = accidents.filter(accident => {
+            const assignedTo = accident.ticketId?.assignedTo?._id || accident.ticketId?.assignedTo;
             return assignedTo?.toString() === id;
         });
 
         // Populate report if exists
-        const populatedMaints = await Promise.all(filteredMaints.map(async (maint) => {
-            if (maint.reportId) {
-                const report = await Report.findById(maint.reportId);
-                maint.reportId = report;
+        const populatedAccidents = await Promise.all(filteredAccidents.map(async (accident) => {
+            if (accident.reportId) {
+                const report = await Report.findById(accident.reportId);
+                accident.reportId = report;
             }
-            return maint;
+            return accident;
         }));
 
-        res.json(populatedMaints);
+        res.json(populatedAccidents);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -292,15 +297,15 @@ export const getMaintTicketsTech = async (req, res) => {
 };
 
 /**------------------------------------------
- * @desc Get all maintenance records where the associated ticket is not assigned to anyone
- * @route GET /api/maintenance/unassigned
+ * @desc Get all accident records where the associated ticket is not assigned to anyone
+ * @route GET /api/accident/unassigned
  * @access Private
  * @role Tech, Admin, Super Admin
  -------------------------------------------*/
 export const getEveryoneTicket = async (req, res) => {
     try {
-        // Fetch all maintenance records
-        const maintenances = await Maintenance.find()
+        // Fetch all accident records
+        const accidents = await Accident.find()
             .populate({
                 path: 'ticketId',
                 select: 'openedBy assignedTo priority assetId description status openedByModel',
@@ -320,21 +325,21 @@ export const getEveryoneTicket = async (req, res) => {
                 ],
             });
 
-        if (!maintenances || maintenances.length === 0) {
-            return res.status(404).json({ message: "No maintenance records found" });
+        if (!accidents || accidents.length === 0) {
+            return res.status(404).json({ message: "No accident records found" });
         }
 
-        // Filter the maintenance records where the associated ticket's assignedTo is null or empty
-        const unassignedMaintenances = maintenances.filter(maintenance => {
-            const assignedTo = maintenance.ticketId?.assignedTo;
-            return !assignedTo; // If assignedTo is null or doesn't exist, include this maintenance record
+        // Filter the accident records where the associated ticket's assignedTo is null or empty
+        const unassignedAccidents = accidents.filter(accident => {
+            const assignedTo = accident.ticketId?.assignedTo;
+            return !assignedTo; // If assignedTo is null or doesn't exist, include this accident record
         });
 
-        if (unassignedMaintenances.length === 0) {
-            return res.status(404).json({ message: "No unassigned maintenance records found" });
+        if (unassignedAccidents.length === 0) {
+            return res.status(404).json({ message: "No unassigned accident records found" });
         }
 
-        res.status(200).json(unassignedMaintenances);
+        res.status(200).json(unassignedAccidents);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -343,22 +348,22 @@ export const getEveryoneTicket = async (req, res) => {
 
 /**------------------------------------------
  * @desc Claim a ticket (assign it to the logged-in user)
- * @route PUT /api/tickets/claim/:id
+ * @route PUT /api/accident/claim/:id
  * @access Private
  * @role Tech
  -------------------------------------------*/
 export const claimTicket = async (req, res) => {
     try {
-        const maintId = req.params.maintId;
+        const accidentId = req.params.accidentId;
         const userId = req.user.id;
 
-        // Check if the maint ticket exists
-        const maint = await Maintenance.findById(maintId);
-        if (!maint) {
-            return res.status(404).json({ message: "Maintenance ticket not found" });
+        // Check if the accident ticket exists
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
         }
 
-        const ticketId = maint.ticketId;
+        const ticketId = accident.ticketId;
 
         // Check if the ticket exists
         const ticket = await Ticket.findById(ticketId);
@@ -382,20 +387,63 @@ export const claimTicket = async (req, res) => {
     }
 };
 
+/**-------------------------------------------
+ * @desc Start time for accident ticket 
+ * @route POST /api/accident/start/:id
+ * @access Private
+ *  @role Tech
+ -------------------------------------------*/
+export const startAccident = async (req, res) => {
+    try {
+        const accidentId = req.params.accidentId;
+
+        // check if the accident ticket exists
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
+        }
+
+        // get the accidentId from the accident ticket
+        const ticketId = accident.ticketId;
+        // check if the ticket exists
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ message: "Ticket not found" });
+        }
+        // check if the ticket is already started
+        if (ticket.startTime) {
+            return res.status(400).json({ message: "Ticket already started" });
+        }
+
+        // add the start time to the ticket
+        ticket.startTime = new Date();
+        ticket.status = 'In Progress';
+        await ticket.save();
+
+        // change the accident status to In Progress
+        accident.status = 'In Progress';
+        await accident.save();
+        res.json({ message: "Accident started successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 /**------------------------------------------
- * @desc Add a report to a maintenance ticket by Tech
- * @route POST /api/maintenance/tech/:id
+ * @desc Add a report to a accident ticket by Tech
+ * @route POST /api/tech/:id
  * @access Private
  * @role Tech
  * -------------------------------------------*/
-export const addReportToMaint = async (req, res) => {
+export const addReportToAccident = async (req, res) => {
     try {
-        const maintId = req.params.maintId;
+        const accidentId = req.params.accidentId;
 
-        // check if the maint ticket exists
-        const maint = await Maintenance.findById(maintId);
-        if (!maint) {
-            return res.status(404).json({ message: "Maintenance ticket not found" });
+        // check if the accident ticket exists
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
         }
 
         const { description } = req.body;
@@ -421,8 +469,8 @@ export const addReportToMaint = async (req, res) => {
 
         const createdReport = await report.save();
 
-        maint.reportId = createdReport._id;
-        await maint.save();
+        accident.reportId = createdReport._id;
+        await accident.save();
         res.json({ message: "Report added successfully" });
     } catch (error) {
         console.error(error);
@@ -430,69 +478,98 @@ export const addReportToMaint = async (req, res) => {
     }
 }
 
-/**-------------------------------------------
- * @desc Start time for maintenance ticket 
- * @route POST /api/maintenance/start/:id
+/**------------------------------------------
+ * @desc Add a croca to an accident ticket by Tech
+ * @route POST /api/croca/:accidentId
  * @access Private
- *  @role Tech
+ * @role Tech
  -------------------------------------------*/
-export const startMaint = async (req, res) => {
+export const addCrocaToAccident = async (req, res) => {
     try {
-        const maintId = req.params.maintId;
+        const accidentId = req.params.accidentId;
+        const { requireSpareParts, spareParts } = req.body;
 
-        // check if the maint ticket exists
-        const maint = await Maintenance.findById(maintId);
-        if (!maint) {
-            return res.status(404).json({ message: "Maintenance ticket not found" });
+        // Check if the accident ticket exists
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
         }
 
-        // get the maintId from the maint ticket
-        const ticketId = maint.ticketId;
-        // check if the ticket exists
-        const ticket = await Ticket.findById(ticketId);
-        if (!ticket) {
-            return res.status(404).json({ message: "Ticket not found" });
-        }
-        // check if the ticket is already started
-        if (ticket.startTime) {
-            return res.status(400).json({ message: "Ticket already started" });
+        const { crocaType, cost } = req.body;
+
+        // Make sure all fields are present
+        if (!crocaType || !cost || !req.file) {
+            return res.status(400).json({ message: "All fields are required" });
         }
 
-        // add the start time to the ticket
-        ticket.startTime = new Date();
-        ticket.status = 'In Progress';
-        await ticket.save();
+        // Upload photo
+        const crocaPath = req.file.path;
+        const crocaUrl = await uploadToCloudinary(crocaPath);
+        fs.unlinkSync(crocaPath); // Remove the local file
 
-        // change the maint status to In Progress
-        maint.status = 'In Progress';
-        await maint.save();
-        res.json({ message: "Maintenance started successfully" });
+        // Add croca to the accident ticket
+        accident.croca = {
+            crocaType,
+            cost,
+            photo: crocaUrl,
+        };
+
+        accident.requireSpareParts = requireSpareParts;
+        // check if spare parts if required
+        if (requireSpareParts) {
+            // check if spare parts are provided
+            if (!spareParts || spareParts.length === 0) {
+                return res.status(400).json({ message: "Spare parts are required" });
+            }
+
+            // check if the spare parts are valid
+            for (const sparePartId of spareParts) {
+                const updatedSparePart = await SparePart.findOneAndUpdate(
+                    { _id: sparePartId, quantity: { $gt: 0 } },
+                    { $inc: { quantity: -1 } },
+                    { new: true }
+                );
+
+                if (!updatedSparePart) {
+                    return res.status(400).json({
+                        message: `Spare Part with ID ${sparePartId} is invalid or out of stock`,
+                    });
+                }
+            }
+
+            accident.spareParts = spareParts;
+        }
+
+        await accident.save();
+
+        res.json({ message: "Croca added successfully" });
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 /**-------------------------------------------
-* @desc Close for maintenance ticket 
-* @route POST /api/maintenance/end/:id
+* @desc Close for accident ticket 
+* @route POST /api/accident/end/:id
 * @access Private
 *  @role Tech
 -------------------------------------------*/
-export const closeMaint = async (req, res) => {
+export const closeAccident = async (req, res) => {
     try {
-        const maintId = req.params.maintId;
-        // check if the maint ticket exists
-        const maint = await Maintenance.findById(maintId);
-        if (!maint) {
-            return res.status(404).json({ message: "Maintenance ticket not found" });
+        const accidentId = req.params.accidentId;
+        // check if the accident ticket exists
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
         }
 
-        maint.status = 'Closed';
-        await maint.save();
+        accident.status = 'Closed';
+        await accident.save();
 
-        // get the ticketId from the maint ticket
-        const ticketId = maint.ticketId;
+        // get the ticketId from the accident ticket
+        const ticketId = accident.ticketId;
         // check if the ticket exists
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
@@ -505,12 +582,12 @@ export const closeMaint = async (req, res) => {
         }
 
         ticket.endTime = new Date();
-        // calculate the time spent on the maint (timer)
+        // calculate the time spent on the accident (timer)
         const timeSpent = ticket.endTime - ticket.startTime;
         ticket.timer = Math.floor(timeSpent / 1000 / 60); // convert to minutes
         await ticket.save();
 
-        res.json({ message: "Maintenance ended successfully" });
+        res.json({ message: "Accident ended successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -518,27 +595,27 @@ export const closeMaint = async (req, res) => {
 }
 
 /**-------------------------------------------
- * @desc Delete a maintenance ticket
- * @route DELETE /api/maintenance/:id
+ * @desc Delete a accident ticket
+ * @route DELETE /api/accident/:id
  * @access Private
  * @role Admin, Super Admin
  -------------------------------------------*/
-export const deleteMaint = async (req, res) => {
+ export const deleteAccident = async (req, res) => {
     try {
-        const maintId = req.params.maintId;
-        // check if the maint ticket exists
-        const maint = await Maintenance.findById(maintId);
-        if (!maint) {
-            return res.status(404).json({ message: "Maintenance ticket not found" });
+        const accidentId = req.params.accidentId;
+        // check if the accident ticket exists
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
         }
         // check if the ticketId exists
-        const ticketId = maint.ticketId;
+        const ticketId = accident.ticketId;
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
             return res.status(404).json({ message: "Ticket not found" });
         }
         // check if there is a reportId
-        const reportId = maint.reportId;
+        const reportId = accident.reportId;
         if (reportId) {
             const report = await Report.findById(reportId);
             if (!report) {
@@ -549,9 +626,9 @@ export const deleteMaint = async (req, res) => {
         }
         // delete the ticket
         await ticket.deleteOne();
-        // delete the maint ticket
-        await Maintenance.deleteOne();
-        res.json({ message: "maint ticket deleted successfully" });
+        // delete the accident ticket
+        await Accident.deleteOne();
+        res.json({ message: "accident ticket deleted successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });

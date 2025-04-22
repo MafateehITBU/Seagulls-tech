@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const maintenanceSchema = new mongoose.Schema({
+const accidentSchema = new mongoose.Schema({
     ticketId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -20,12 +20,24 @@ const maintenanceSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Report',
     },
+    croca: {
+        crocaType: {
+            type: String,
+            // enum: ['Croca', 'Anonymous', 'Insurance Expired'],
+        },
+        cost: {
+            type: String,
+        },
+        photo: {
+            type: String,
+        }
+    },
     status: {
         type: String,
-        enum: ['Pending', 'Open', 'In Progress', 'Completed', 'Closed'],
+        enum: ['Pending', 'Open','In Progress', 'Closed'],
         default: 'Pending',
     },
-})
+}, { timestamps: true });
 
-const Maintenance = mongoose.model('Maintenance', maintenanceSchema);
-export default Maintenance;
+const Accident = mongoose.model('Accident', accidentSchema);
+export default Accident;

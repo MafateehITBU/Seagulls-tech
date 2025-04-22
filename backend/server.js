@@ -11,6 +11,8 @@ import sparePartRoutes from './routes/sparePartRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import cleaningRoutes from './routes/cleaningRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
+import accidentRoutes from './routes/accidentRoutes.js';
+import ticketRoutes from './routes/ticketRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +42,8 @@ app.use('/api/sparepart', sparePartRoutes); // Spare part routes
 app.use('/api/report', reportRoutes); // Report routes
 app.use('/api/cleaning', cleaningRoutes); // Cleaning routes
 app.use('/api/maintenance', maintenanceRoutes); // Maintenance routes
+app.use('/api/accident', accidentRoutes); // Accident routes
+app.use('/api/ticket', ticketRoutes); // Ticket routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

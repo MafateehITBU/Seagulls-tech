@@ -18,7 +18,8 @@ export const createCleaningTicket = async (req, res) => {
         const openedBy = req.user.id;
         const openedByModel = req.user.position === 'tech' ? 'Tech' : 'Admin'; // position is either 'Tech' or 'Admin'
 
-        const { assignedTo, priority, assetId, description } = req.body;
+        let assignedTo = req.body.assignedTo;
+        const { priority, assetId, description } = req.body;
 
         if (!openedBy || !openedByModel || !priority || !assetId) {
             return res.status(400).json({ message: "Please Fill all required fields" });
@@ -49,6 +50,8 @@ export const createCleaningTicket = async (req, res) => {
             if (!tech) {
                 return res.status(404).json({ message: "Tech not found" });
             }
+        } else if (openedByModel === 'Tech') {
+            assignedTo = openedBy;
         }
         // check if the priority is valid
         const validPriorities = ['Low', 'Medium', 'High'];
@@ -92,7 +95,7 @@ export const createCleaningTicket = async (req, res) => {
  * -------------------------------------------*/
 export const getAdminCleaningTickets = async (req, res) => {
     try {
-        const cleanings = await Cleaning.find({ status: { $in: ['Open','Pending', 'In Progress'] } })
+        const cleanings = await Cleaning.find({ status: { $in: ['Open', 'Pending', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
                 select: 'openedBy assignedTo priority assetId description status openedByModel',
@@ -132,7 +135,7 @@ export const getAdminCleaningTickets = async (req, res) => {
 };
 
 /**------------------------------------------
- * @desc Get all cleaning tickets Closed
+ * @desc Get all cleaning records Closed
  * @route GET /api/cleaning/closed
  * @access Private
  * @role Admin, Super Admin
@@ -192,7 +195,7 @@ export const getCleaningTicketsByTech = async (req, res) => {
         }
 
         // Fetch open or in-progress cleaning tickets and populate related fields
-        const cleanings = await Cleaning.find({ status: { $in: ['Open', 'In Progress'] } })
+        const cleanings = await Cleaning.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
                 select: 'openedBy assignedTo priority assetId description status openedByModel',
@@ -232,6 +235,97 @@ export const getCleaningTicketsByTech = async (req, res) => {
         }));
 
         res.json(populatedCleanings);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**------------------------------------------
+ * @desc Get all cleaning records where the associated ticket is not assigned to anyone
+ * @route GET /api/cleaning/unassigned
+ * @access Private
+ * @role Tech, Admin, Super Admin
+ -------------------------------------------*/
+export const getEveryoneTicket = async (req, res) => {
+    try {
+        // Fetch all cleaning records
+        const cleanings = await Cleaning.find()
+            .populate({
+                path: 'ticketId',
+                select: 'openedBy assignedTo priority assetId description status openedByModel',
+                populate: [
+                    {
+                        path: 'openedBy',
+                        select: 'name',
+                    },
+                    {
+                        path: 'assignedTo',
+                        select: 'name',
+                    },
+                    {
+                        path: 'assetId',
+                        select: 'assetName',
+                    },
+                ],
+            });
+
+        if (!cleanings || cleanings.length === 0) {
+            return res.status(404).json({ message: "No cleaning records found" });
+        }
+
+        // Filter the cleaning records where the associated ticket's assignedTo is null or empty
+        const unassignedcleanings = cleanings.filter(cleaning => {
+            const assignedTo = cleaning.ticketId?.assignedTo;
+            return !assignedTo; // If assignedTo is null or doesn't exist, include this cleaning record
+        });
+
+        if (unassignedcleanings.length === 0) {
+            return res.status(404).json({ message: "No unassigned cleaning records found" });
+        }
+
+        res.status(200).json(unassignedcleanings);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**------------------------------------------
+ * @desc Claim a ticket (assign it to the logged-in user)
+ * @route PUT /api/cleaning/claim/:id
+ * @access Private
+ * @role Tech
+ -------------------------------------------*/
+export const claimTicket = async (req, res) => {
+    try {
+        const cleaningId = req.params.cleaningId;
+        const userId = req.user.id;
+
+        // Check if the cleaning ticket exists
+        const cleaning = await Cleaning.findById(cleaningId);
+        if (!cleaning) {
+            return res.status(404).json({ message: "cleaning ticket not found" });
+        }
+
+        const ticketId = cleaning.ticketId;
+
+        // Check if the ticket exists
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ message: "Ticket not found" });
+        }
+
+        // Check if the ticket is already assigned
+        if (ticket.assignedTo) {
+            return res.status(400).json({ message: "Ticket is already assigned to someone else" });
+        }
+
+        // Update the ticket's assignedTo field
+        ticket.assignedTo = userId;
+        await ticket.save();
+
+        res.status(200).json({ message: "Ticket claimed successfully", ticket });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
