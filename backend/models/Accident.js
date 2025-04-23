@@ -20,6 +20,10 @@ const accidentSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Report',
     },
+    rejectReportId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Report',
+    },
     croca: {
         crocaType: {
             type: String,
@@ -34,7 +38,7 @@ const accidentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Pending', 'Open','In Progress', 'Closed'],
+        enum: ['Pending', 'Open', 'In Progress', 'Closed'],
         default: 'Pending',
     },
 }, { timestamps: true });

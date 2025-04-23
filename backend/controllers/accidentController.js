@@ -115,125 +115,6 @@ export const createAccidentTicket = async (req, res) => {
 };
 
 /**------------------------------------------
- * @desc Get all accident tickets Open / In Progress
- * @route GET /api/accident
- * @access Private
- * @role Admin, Super Admin
- -------------------------------------------*/
-export const getAdminAccidentTickets = async (req, res) => {
-    try {
-        const accidents = await Accident.find({ status: { $in: ['Open', 'Pending', 'In Progress'] } })
-            .populate({
-                path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
-                populate: [
-                    { path: 'assignedTo', select: 'name' },
-                    { path: 'assetId', select: 'name' },
-                    { path: 'openedBy', select: 'name' },
-                    { path: 'assetId', select: 'assetName' },
-                ],
-            });
-
-        if (!accidents || accidents.length === 0) {
-            return res.status(404).json({ message: "No Accident tickets found" });
-        }
-
-        // Convert to plain objects and populate reports
-        let populatedAccident = await Promise.all(accidents.map(async (accident) => {
-            const accidentObj = accident.toObject();
-            if (accidentObj.reportId) {
-                const report = await Report.findById(accidentObj.reportId);
-                accidentObj.reportId = report;
-            }
-            return accidentObj;
-        }));
-
-        // Gather all spare part IDs
-        const sparePartIds = populatedAccident.flatMap(a => a.spareParts || []);
-        const spareParts = await SparePart.find({ _id: { $in: sparePartIds } });
-
-        // Create a map of spare part names
-        const sparePartsMap = {};
-        spareParts.forEach(sp => {
-            sparePartsMap[sp._id.toString()] = sp.partName;
-        });
-
-        // Replace spare part IDs with names
-        populatedAccident = populatedAccident.map(a => {
-            a.spareParts = (a.spareParts || []).map(spId => sparePartsMap[spId.toString()] || "Unknown");
-            return a;
-        });
-
-
-        res.status(200).json(populatedAccident);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-/**------------------------------------------
- * @desc Get all accident tickets Closed
- * @route GET /api/accident/closed
- * @access Private
- * @role Admin, Super Admin
- * -------------------------------------------*/
-export const getClosedAccidentTickets = async (req, res) => {
-    try {
-        const accidents = await Accident.find({ status: 'Closed' })
-            .populate({
-                path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
-                populate: [
-                    {
-                        path: 'openedBy',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assignedTo',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assetId',
-                        select: 'assetName',
-                    },
-                ],
-            });
-        if (!accidents || accidents.length === 0) {
-            return res.status(404).json({ message: "No closed Accident tickets found" });
-        }
-        let populatedAccident = await Promise.all(accidents.map(async (accident) => {
-            if (accident.reportId) {
-                const report = await Report.findById(accident.reportId);
-                accident.reportId = report;
-            }
-            return accident;
-        }));
-
-        // Gather all spare part IDs
-        const sparePartIds = populatedAccident.flatMap(a => a.spareParts || []);
-        const spareParts = await SparePart.find({ _id: { $in: sparePartIds } });
-
-        // Create a map of spare part names
-        const sparePartsMap = {};
-        spareParts.forEach(sp => {
-            sparePartsMap[sp._id.toString()] = sp.partName;
-        });
-
-        // Replace spare part IDs with names
-        populatedAccident = populatedAccident.map(a => {
-            a.spareParts = (a.spareParts || []).map(spId => sparePartsMap[spId.toString()] || "Unknown");
-            return a;
-        });
-
-        res.json(populatedAccident);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
-/**------------------------------------------
  * @desc Get all Open and In Progress accident tickets assigned to the logged-in Tech
  * @route GET /api/accident/tech/:id
  * @access Private
@@ -478,6 +359,67 @@ export const addReportToAccident = async (req, res) => {
     }
 }
 
+
+/**------------------------------------------
+ * @desc Add a report to a accident ticket by Tech
+ * @route POST /api/tech/reject/:id
+ * @access Private
+ * @role Tech
+ * -------------------------------------------*/
+export const addRejectReportToAccident = async (req, res) => {
+    try {
+        const accidentId = req.params.accidentId;
+
+        // check if the accident ticket exists
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
+        }
+
+        // check if the ticket exists
+        const ticketId = accident.ticketId;
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ message: "Ticket not found" });
+        }
+
+        // check if the ticket is approved
+        if (ticket.approved) {
+            return res.status(400).json({ message: "Ticket already approved. You can't upload a reject report unless it's rejected!" });
+        }
+
+        const { description } = req.body;
+        if (!description || !req.files || !req.files.photoBefore || !req.files.photoAfter) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        // Upload photoBefore
+        const photoBeforePath = req.files.photoBefore[0].path;
+        const photoBeforeUrl = await uploadToCloudinary(photoBeforePath);
+        fs.unlinkSync(photoBeforePath); // remove local file
+
+        // Upload photoAfter
+        const photoAfterPath = req.files.photoAfter[0].path;
+        const photoAfterUrl = await uploadToCloudinary(photoAfterPath);
+        fs.unlinkSync(photoAfterPath); // remove local file
+
+        const report = new Report({
+            description,
+            photoBefore: photoBeforeUrl,
+            photoAfter: photoAfterUrl,
+        });
+
+        const createdReport = await report.save();
+
+        accident.rejectReportId = createdReport._id;
+        await accident.save();
+        res.json({ message: "Report added successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 /**------------------------------------------
  * @desc Add a croca to an accident ticket by Tech
  * @route POST /api/croca/:accidentId
@@ -565,9 +507,6 @@ export const closeAccident = async (req, res) => {
             return res.status(404).json({ message: "Accident ticket not found" });
         }
 
-        accident.status = 'Closed';
-        await accident.save();
-
         // get the ticketId from the accident ticket
         const ticketId = accident.ticketId;
         // check if the ticket exists
@@ -580,6 +519,9 @@ export const closeAccident = async (req, res) => {
         if (!ticket.approved) {
             return res.status(400).json({ message: "Ticket not approved, you can't close it yet." });
         }
+        
+        accident.status = 'Closed';
+        await accident.save();
 
         ticket.endTime = new Date();
         // calculate the time spent on the accident (timer)
@@ -600,7 +542,7 @@ export const closeAccident = async (req, res) => {
  * @access Private
  * @role Admin, Super Admin
  -------------------------------------------*/
- export const deleteAccident = async (req, res) => {
+export const deleteAccident = async (req, res) => {
     try {
         const accidentId = req.params.accidentId;
         // check if the accident ticket exists

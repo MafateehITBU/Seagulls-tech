@@ -20,6 +20,10 @@ const maintenanceSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Report',
     },
+    rejectReportId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Report',
+    },
     status: {
         type: String,
         enum: ['Pending', 'Open', 'In Progress', 'Completed', 'Closed'],

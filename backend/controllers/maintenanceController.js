@@ -110,125 +110,6 @@ export const createMaintenanceTicket = async (req, res) => {
 };
 
 /**------------------------------------------
- * @desc Get all maintenance tickets Open / In Progress
- * @route GET /api/maintenance
- * @access Private
- * @role Admin, Super Admin
- -------------------------------------------*/
-export const getAdminMaintenanceTickets = async (req, res) => {
-    try {
-        const maintenances = await Maintenance.find({ status: { $in: ['Open', 'Pending', 'In Progress'] } })
-            .populate({
-                path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
-                populate: [
-                    { path: 'assignedTo', select: 'name' },
-                    { path: 'assetId', select: 'name' },
-                    { path: 'openedBy', select: 'name' },
-                    { path: 'assetId', select: 'assetName' },
-                ],
-            });
-
-        if (!maintenances || maintenances.length === 0) {
-            return res.status(404).json({ message: "No maintenance tickets found" });
-        }
-
-        // Convert to plain objects and populate reports
-        let populatedMaint = await Promise.all(maintenances.map(async (maint) => {
-            const maintObj = maint.toObject();
-            if (maintObj.reportId) {
-                const report = await Report.findById(maintObj.reportId);
-                maintObj.reportId = report;
-            }
-            return maintObj;
-        }));
-
-        // Gather all spare part IDs
-        const sparePartIds = populatedMaint.flatMap(m => m.spareParts || []);
-        const spareParts = await SparePart.find({ _id: { $in: sparePartIds } });
-
-        // Create a map of spare part names
-        const sparePartsMap = {};
-        spareParts.forEach(sp => {
-            sparePartsMap[sp._id.toString()] = sp.partName;
-        });
-
-        // Replace spare part IDs with names
-        populatedMaint = populatedMaint.map(m => {
-            m.spareParts = (m.spareParts || []).map(spId => sparePartsMap[spId.toString()] || "Unknown");
-            return m;
-        });
-
-
-        res.status(200).json(populatedMaint);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-/**------------------------------------------
- * @desc Get all maintenance tickets Closed
- * @route GET /api/maintenance/closed
- * @access Private
- * @role Admin, Super Admin
- * -------------------------------------------*/
-export const getClosedMaintTickets = async (req, res) => {
-    try {
-        const maintenances = await Maintenance.find({ status: 'Closed' })
-            .populate({
-                path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
-                populate: [
-                    {
-                        path: 'openedBy',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assignedTo',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assetId',
-                        select: 'assetName',
-                    },
-                ],
-            });
-        if (!maintenances || maintenances.length === 0) {
-            return res.status(404).json({ message: "No closed maintenance tickets found" });
-        }
-        let populatedMaint = await Promise.all(maintenances.map(async (maint) => {
-            if (maint.reportId) {
-                const report = await Report.findById(maint.reportId);
-                maint.reportId = report;
-            }
-            return maint;
-        }));
-
-        // Gather all spare part IDs
-        const sparePartIds = populatedMaint.flatMap(m => m.spareParts || []);
-        const spareParts = await SparePart.find({ _id: { $in: sparePartIds } });
-
-        // Create a map of spare part names
-        const sparePartsMap = {};
-        spareParts.forEach(sp => {
-            sparePartsMap[sp._id.toString()] = sp.partName;
-        });
-
-        // Replace spare part IDs with names
-        populatedMaint = populatedMaint.map(m => {
-            m.spareParts = (m.spareParts || []).map(spId => sparePartsMap[spId.toString()] || "Unknown");
-            return m;
-        });
-
-        res.json(populatedMaint);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
-/**------------------------------------------
  * @desc Get all Open and In Progress maintenance tickets assigned to the logged-in Tech
  * @route GET /api/maintenance/tech/:id
  * @access Private
@@ -473,6 +354,71 @@ export const startMaint = async (req, res) => {
     }
 }
 
+/**------------------------------------------
+ * @desc Add a report to a maintenance ticket by Tech
+ * @route POST /api/maintenance/tech/reject/:id
+ * @access Private
+ * @role Tech
+ * -------------------------------------------*/
+export const addRejectReportToMaint = async (req, res) => {
+    try {
+        const maintId = req.params.maintId;
+
+        // check if the maint ticket exists
+        const maint = await Maintenance.findById(maintId);
+        if (!maint) {
+            return res.status(404).json({ message: "Maintenance ticket not found" });
+        }
+
+        // check if the ticketId exists
+        const ticketId = maint.ticketId;
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ message: "Ticket not found" });
+        }
+
+        // check if the ticket is not approved
+        if (ticket.approved) {
+            return res.status(400).json({ message: "Ticket already approved. You can't upload a reject report unless it's rejected!" });
+        }
+
+        // check if the ticket is neither approved nor rejected
+        if (ticket.approved === null) {
+            return res.status(400).json({ message: "Ticket is neither approved nor rejected. You can't upload a reject report unless it's rejected!" });
+        }
+
+        const { description } = req.body;
+        if (!description || !req.files || !req.files.photoBefore || !req.files.photoAfter) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        // Upload photoBefore
+        const photoBeforePath = req.files.photoBefore[0].path;
+        const photoBeforeUrl = await uploadToCloudinary(photoBeforePath);
+        fs.unlinkSync(photoBeforePath); // remove local file
+
+        // Upload photoAfter
+        const photoAfterPath = req.files.photoAfter[0].path;
+        const photoAfterUrl = await uploadToCloudinary(photoAfterPath);
+        fs.unlinkSync(photoAfterPath); // remove local file
+
+        const report = new Report({
+            description,
+            photoBefore: photoBeforeUrl,
+            photoAfter: photoAfterUrl,
+        });
+
+        const createdReport = await report.save();
+
+        maint.rejectReportId = createdReport._id;
+        await maint.save();
+        res.json({ message: "Report added successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 /**-------------------------------------------
 * @desc Close for maintenance ticket 
 * @route POST /api/maintenance/end/:id
@@ -488,9 +434,6 @@ export const closeMaint = async (req, res) => {
             return res.status(404).json({ message: "Maintenance ticket not found" });
         }
 
-        maint.status = 'Closed';
-        await maint.save();
-
         // get the ticketId from the maint ticket
         const ticketId = maint.ticketId;
         // check if the ticket exists
@@ -503,6 +446,9 @@ export const closeMaint = async (req, res) => {
         if (!ticket.approved) {
             return res.status(400).json({ message: "Ticket not approved, you can't close it yet." });
         }
+        
+        maint.status = 'Closed';
+        await maint.save();
 
         ticket.endTime = new Date();
         // calculate the time spent on the maint (timer)

@@ -43,7 +43,7 @@ const ticketSchema = new mongoose.Schema({
     },
     approved: {
         type: Boolean,
-        default: false,
+        default: null,
     },
     status: {
         type: String,

@@ -61,9 +61,9 @@ const assetSchema = new mongoose.Schema({
         }
     },
     maintenanceSchedule: {
-        intervalInMonths: {
+        intervalInDays: {
             type: Number,
-            default: 2 // every 2 months
+            default: 30 // every month
         },
         nextMaintenanceDate: {
             type: Date,

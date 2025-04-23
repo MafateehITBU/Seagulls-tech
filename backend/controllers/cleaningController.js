@@ -88,97 +88,6 @@ export const createCleaningTicket = async (req, res) => {
 }
 
 /**------------------------------------------
- * @desc Get all cleaning tickets Open /In Progress
- * @route GET /api/cleaning
- * @access Private
- * @role Admin, Super Admin
- * -------------------------------------------*/
-export const getAdminCleaningTickets = async (req, res) => {
-    try {
-        const cleanings = await Cleaning.find({ status: { $in: ['Open', 'Pending', 'In Progress'] } })
-            .populate({
-                path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
-                populate: [
-                    {
-                        path: 'assignedTo',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assetId',
-                        select: 'assetName',
-                    },
-                    {
-                        path: 'openedBy',
-                        select: 'name',
-                    },
-                ],
-            });
-
-        if (!cleanings || cleanings.length === 0) {
-            return res.status(404).json({ message: "No cleaning tickets found" });
-        }
-
-        const populatedCleanings = await Promise.all(cleanings.map(async (cleaning) => {
-            if (cleaning.reportId) {
-                const report = await Report.findById(cleaning.reportId);
-                cleaning.reportId = report;
-            }
-            return cleaning;
-        }));
-
-        res.json(populatedCleanings);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-/**------------------------------------------
- * @desc Get all cleaning records Closed
- * @route GET /api/cleaning/closed
- * @access Private
- * @role Admin, Super Admin
- * -------------------------------------------*/
-export const getClosedCleaningTickets = async (req, res) => {
-    try {
-        const cleanings = await Cleaning.find({ status: 'Closed' })
-            .populate({
-                path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
-                populate: [
-                    {
-                        path: 'openedBy',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assignedTo',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assetId',
-                        select: 'assetName',
-                    },
-                ],
-            });
-        if (!cleanings || cleanings.length === 0) {
-            return res.status(404).json({ message: "No closed cleaning tickets found" });
-        }
-        const populatedCleanings = await Promise.all(cleanings.map(async (cleaning) => {
-            if (cleaning.reportId) {
-                const report = await Report.findById(cleaning.reportId);
-                cleaning.reportId = report;
-            }
-            return cleaning;
-        }));
-        res.json(populatedCleanings);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
-/**------------------------------------------
  * @desc Get all Open and In Progress cleaning tickets assigned to the logged-in Tech
  * @route GET /api/cleaning/tech/:id
  * @access Private
@@ -438,9 +347,6 @@ export const closeCleaning = async (req, res) => {
             return res.status(404).json({ message: "Cleaning ticket not found" });
         }
 
-        cleaning.status = 'Closed';
-        await cleaning.save();
-
         // get the ticketId from the cleaning ticket
         const ticketId = cleaning.ticketId;
         // check if the ticket exists
@@ -448,6 +354,14 @@ export const closeCleaning = async (req, res) => {
         if (!ticket) {
             return res.status(404).json({ message: "Ticket not found" });
         }
+
+        // check if the ticket is approved
+        if (!ticket.approved) {
+            return res.status(400).json({ message: "Ticket not approved yet" });
+        }
+
+        cleaning.status = 'Closed';
+        await cleaning.save();
 
         ticket.endTime = new Date();
         // calculate the time spent on the cleaning (timer)

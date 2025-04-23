@@ -20,13 +20,13 @@ export const createAsset = async (req, res) => {
         coordinates,
         installationDate,
         quantity = 1,
-        intervalInDays,
-        intervalInMonths,
+        cleaningIntervalInDays,
+        maintIntervalInDays,
         maintenanceReports = []
     } = req.body;
 
     // Validate required fields
-    if (!assetNo || !assetName || !assetType || !assetSubType || !location || !coordinates || !installationDate || !intervalInDays || !intervalInMonths) {
+    if (!assetNo || !assetName || !assetType || !assetSubType || !location || !coordinates || !installationDate || !cleaningIntervalInDays || !maintIntervalInDays) {
         return res.status(400).json({ message: "Please fill all required fields" });
     }
 
@@ -41,8 +41,8 @@ export const createAsset = async (req, res) => {
     }
 
     // Validate interval
-    if (intervalInDays < 1 || intervalInMonths < 1) {
-        return res.status(400).json({ message: "Interval in days and months must be greater than 0" });
+    if (cleaningIntervalInDays < 1 || maintIntervalInDays < 1) {
+        return res.status(400).json({ message: "Interval in days must be greater than 0" });
     }
 
     // Validate installation date
@@ -72,10 +72,9 @@ export const createAsset = async (req, res) => {
         }
     }
 
-    // Calculate next cleaning and maintenance dates
-    const today = new Date();
-    const nextCleaningDate = new Date(today.getTime() + intervalInDays * 24 * 60 * 60 * 1000);
-    const nextMaintenanceDate = new Date(today.getTime() + intervalInMonths * 30 * 24 * 60 * 60 * 1000);
+    // Calculate next cleaning and maintenance next dates based on the installationDate
+    const nextCleaningDate = new Date(installationDateObj.getTime() + cleaningIntervalInDays * 24 * 60 * 60 * 1000);
+    const nextMaintenanceDate = new Date(installationDateObj.getTime() + maintIntervalInDays * 24 * 60 * 60 * 1000);
 
     // Check for duplicate assetNo
     const existingAsset = await Asset.findOne({ assetNo });
@@ -96,11 +95,11 @@ export const createAsset = async (req, res) => {
             quantity,
             photo,
             cleaningSchedule: {
-                intervalInDays,
+                intervalInDays: cleaningIntervalInDays,
                 nextCleaningDate
             },
             maintenanceSchedule: {
-                intervalInMonths,
+                intervalInDays: maintIntervalInDays,
                 nextMaintenanceDate
             },
             maintenanceReports
@@ -184,8 +183,8 @@ export const updateAsset = async (req, res) => {
         coordinates,
         installationDate,
         quantity,
-        intervalInDays,
-        intervalInMonths,
+        cleaningIntervalInDays,
+        maintIntervalInDays,
     } = req.body;
 
     try {
@@ -194,7 +193,9 @@ export const updateAsset = async (req, res) => {
             return res.status(404).json({ message: "Asset not found" });
         }
 
-        // Validate fields if present
+        let installationDateObj = asset.installationDate;
+
+        // Validate and update coordinates
         if (coordinates) {
             if (!helpers.validateCoordinates(coordinates)) {
                 return res.status(400).json({ message: "Invalid coordinates: must be numbers within valid range" });
@@ -202,14 +203,16 @@ export const updateAsset = async (req, res) => {
             asset.coordinates = coordinates;
         }
 
+        // Validate and update installation date
         if (installationDate) {
             if (!helpers.validateInstallationDate(installationDate)) {
                 return res.status(400).json({ message: "Invalid installation date" });
             }
-            const installationDateObj = new Date(installationDate);
+            installationDateObj = new Date(installationDate);
             asset.installationDate = installationDateObj;
         }
 
+        // Validate and update quantity
         if (quantity !== undefined) {
             if (!helpers.validateQuantity(quantity)) {
                 return res.status(400).json({ message: "Quantity must be greater than 0" });
@@ -217,6 +220,7 @@ export const updateAsset = async (req, res) => {
             asset.quantity = quantity;
         }
 
+        // Validate and update asset status
         if (assetStatus) {
             if (!helpers.validateAssetStatus(assetStatus)) {
                 return res.status(400).json({ message: "Invalid asset status" });
@@ -224,27 +228,26 @@ export const updateAsset = async (req, res) => {
             asset.assetStatus = assetStatus;
         }
 
-        if (intervalInDays !== undefined) {
-            if (intervalInDays < 1) {
+        // Update cleaning interval and next cleaning date
+        if (cleaningIntervalInDays !== undefined) {
+            if (cleaningIntervalInDays < 1) {
                 return res.status(400).json({ message: "Interval in days must be greater than 0" });
             }
-            asset.cleaningSchedule.intervalInDays = intervalInDays;
-            const today = new Date();
-            asset.cleaningSchedule.nextCleaningDate = new Date(today.getTime() + intervalInDays * 24 * 60 * 60 * 1000);
+            asset.cleaningSchedule.intervalInDays = cleaningIntervalInDays;
+            asset.cleaningSchedule.nextCleaningDate = new Date(installationDateObj.getTime() + cleaningIntervalInDays * 24 * 60 * 60 * 1000);
         }
 
-        if (intervalInMonths !== undefined) {
-            if (intervalInMonths < 1) {
-                return res.status(400).json({ message: "Interval in months must be greater than 0" });
+        // Update maintenance interval and next maintenance date
+        if (maintIntervalInDays !== undefined) {
+            if (maintIntervalInDays < 1) {
+                return res.status(400).json({ message: "Interval in days must be greater than 0" });
             }
-            asset.maintenanceSchedule.intervalInMonths = intervalInMonths;
-            const today = new Date();
-            asset.maintenanceSchedule.nextMaintenanceDate = new Date(today.getTime() + intervalInMonths * 30 * 24 * 60 * 60 * 1000);
+            asset.maintenanceSchedule.intervalInDays = maintIntervalInDays;
+            asset.maintenanceSchedule.nextMaintenanceDate = new Date(installationDateObj.getTime() + maintIntervalInDays * 24 * 60 * 60 * 1000);
         }
 
-        // Optional updates
+        // Optional fields
         if (assetNo) {
-            // Check for duplicate assetNo
             const existingAsset = await Asset.findOne({ assetNo });
             if (existingAsset && existingAsset._id.toString() !== id) {
                 return res.status(400).json({ message: "Asset with this number already exists" });
@@ -256,7 +259,7 @@ export const updateAsset = async (req, res) => {
         if (assetSubType) asset.assetSubType = assetSubType;
         if (location) asset.location = location;
 
-        // Handle photo
+        // Handle photo upload
         if (req.file) {
             try {
                 asset.photo = await uploadToCloudinary(req.file.path);
