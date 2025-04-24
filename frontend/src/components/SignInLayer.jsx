@@ -1,8 +1,8 @@
 import { Icon } from "@iconify/react/dist/iconify.js";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Cookie from "js-cookie";
 import axiosInstance from "../axiosConfig";
+import { useAuth } from "../context/AuthContext";
 
 const SignInLayer = () => {
 
@@ -10,6 +10,7 @@ const SignInLayer = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSingIn = async (e) => {
     e.preventDefault();
@@ -19,15 +20,10 @@ const SignInLayer = () => {
         email,
         password,
       });
-      // Save the JWT in a cookie
-      Cookie.set("token", response.data.token, {
-        expires: 1, // Expires in 1 day
-      });
+      
+      // Use the context login function
+      login(response.data.token, response.data.position, response.data.id);
 
-      // Save the position in a cookie
-      Cookie.set("position", response.data.position, {
-        expires: 1, // Expires in 1 day
-      });
       if (response.data.position === "admin" || response.data.position === "superadmin") {
         navigate("/");
       } else if (response.data.position === "tech") {
