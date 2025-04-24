@@ -69,7 +69,7 @@ export const getCleaningTickets = async (req, res) => {
 
         // check if openTickets is empty
         if (openTickets.length === 0) {
-            return res.status(404).json({ message: "No open tickets found" });
+            return res.status(404).json({ message: "No tickets found" });
         }
 
         res.status(200).json(openTickets);

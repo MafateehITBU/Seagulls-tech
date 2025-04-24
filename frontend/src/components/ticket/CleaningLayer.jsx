@@ -245,6 +245,7 @@ const CleaningLayer = () => {
             <CreateTicketModal
                 show={showModal}
                 handleClose={() => setShowModal(false)} // Close the modal
+                fetchData={fetchData} // Pass fetchData to refresh the ticket list after creating a new ticket
             />
         </div>
     );

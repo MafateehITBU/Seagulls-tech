@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Cookie from "js-cookie";
 import axiosInstance from "../axiosConfig";
+import { jwtDecode } from "jwt-decode";
 
 const SignInLayer = () => {
 
@@ -14,30 +15,34 @@ const SignInLayer = () => {
   const handleSingIn = async (e) => {
     e.preventDefault();
     setError("");
+
     try {
       const response = await axiosInstance.post("/admin/signin", {
         email,
         password,
       });
-      // Save the JWT in a cookie
-      Cookie.set("token", response.data.token, {
-        expires: 1, // Expires in 1 day
-      });
 
-      // Save the position in a cookie
-      Cookie.set("position", response.data.position, {
-        expires: 1, // Expires in 1 day
-      });
-      if (response.data.position === "admin" || response.data.position === "superadmin") {
+      const token = response.data.token;
+
+      // Save token in cookie
+      Cookie.set("token", token, { expires: 1 });
+
+      // Decode token to get user data
+      const decoded = jwtDecode(token);
+      const position = decoded.position;
+
+      // Redirect based on position
+      if (position === "admin" || position === "superadmin") {
         navigate("/");
-      } else if (response.data.position === "tech") {
+      } else if (position === "tech") {
         navigate("/tech/dashboard");
       }
+
     } catch (err) {
       console.error("Login failed:", err.response?.data?.message || err.message);
       setError(err.response?.data?.message || "Something went wrong. Please try again.");
     }
-  }
+  };
 
   return (
     <section className='auth bg-base d-flex flex-wrap'>
