@@ -96,7 +96,7 @@ export const getTechById = async (req, res) => {
         if (!tech) {
             return res.status(404).json({ message: "Tech not found" });
         }
-        return res.status(200).json({ message: "Tech fetched successfully", tech });
+        return res.status(200).json( tech );
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }

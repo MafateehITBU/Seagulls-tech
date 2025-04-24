@@ -101,7 +101,8 @@ export const getClosedMaintTickets = async (req, res) => {
             .populate({
                 path: 'spareParts',
                 select: 'partName'
-            });
+            })
+            .populate('rejectReportId');
 
         const closedTickets = maintTickets
             .filter(ticket => ticket.ticketId && ticket.ticketId.status === 'Closed')
@@ -152,7 +153,8 @@ export const getClosedMaintTickets = async (req, res) => {
             .populate({
                 path: 'spareParts',
                 select: 'partName'
-            });
+            })
+            .populate('rejectReportId');
 
         const closedTickets = maintTickets
             .filter(ticket => ticket.ticketId && ticket.ticketId.status !== 'Closed')
