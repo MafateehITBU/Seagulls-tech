@@ -156,7 +156,7 @@ const MasterLayout = ({ children }) => {
                 </li>
                 <li>
                   <NavLink
-                    to='/invoice-preview'
+                    to='/cleaning'
                     className={(navData) =>
                       navData.isActive ? "active-page" : ""
                     }

@@ -11,7 +11,7 @@ const axiosInstance = axios.create({
 // Add a request interceptor to include the JWT from cookies
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = Cookies.get("jwt"); // Get the JWT from cookies
+    const token = Cookies.get("token"); // Get the JWT from cookies
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
