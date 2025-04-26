@@ -244,6 +244,8 @@ export const signin = async (req, res) => {
         res.status(200).json({
             message: 'Login successful',
             token,
+            id: user._id,
+            position: position
         });
     } catch (err) {
         console.error('Login error:', err);

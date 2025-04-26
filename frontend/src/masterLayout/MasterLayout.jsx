@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
+import { useAuth } from '../context/AuthContext';
 
 const MasterLayout = ({ children }) => {
   let [sidebarActive, seSidebarActive] = useState(false);
   let [mobileMenu, setMobileMenu] = useState(false);
   const location = useLocation(); // Hook to get the current route
+  const navigate = useNavigate();
+  const { userData, loading, logout } = useAuth();
 
   useEffect(() => {
     const handleDropdownClick = (event) => {
@@ -83,6 +86,11 @@ const MasterLayout = ({ children }) => {
 
   let mobileMenuControl = () => {
     setMobileMenu(!mobileMenu);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/sign-in');
   };
 
   return (
@@ -567,20 +575,32 @@ const MasterLayout = ({ children }) => {
                     type='button'
                     data-bs-toggle='dropdown'
                   >
-                    <img
-                      src='assets/images/user.png'
-                      alt='image_user'
-                      className='w-40-px h-40-px object-fit-cover rounded-circle'
-                    />
+                    {loading ? (
+                      <div className="w-40-px h-40-px rounded-circle bg-neutral-200 animate-pulse" />
+                    ) : (
+                      <img
+                        src={userData?.photo || 'assets/images/user.png'}
+                        alt='user'
+                        className='w-40-px h-40-px object-fit-cover rounded-circle'
+                      />
+                    )}
                   </button>
                   <div className='dropdown-menu to-top dropdown-menu-sm'>
                     <div className='py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2'>
                       <div>
                         <h6 className='text-lg text-primary-light fw-semibold mb-2'>
-                          Shaidul Islam
+                          {loading ? (
+                            <div className="h-6 w-32 bg-neutral-200 rounded animate-pulse" />
+                          ) : (
+                            userData?.name || 'User'
+                          )}
                         </h6>
                         <span className='text-secondary-light fw-medium text-sm'>
-                          Admin
+                          {loading ? (
+                            <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
+                          ) : (
+                            userData?.position || 'User'
+                          )}
                         </span>
                       </div>
                       <button type='button' className='hover-text-danger'>
@@ -604,37 +624,13 @@ const MasterLayout = ({ children }) => {
                         </Link>
                       </li>
                       <li>
-                        <Link
-                          className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
-                          to='/email'
-                        >
-                          <Icon
-                            icon='tabler:message-check'
-                            className='icon text-xl'
-                          />{" "}
-                          Inbox
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'
-                          to='/company'
-                        >
-                          <Icon
-                            icon='icon-park-outline:setting-two'
-                            className='icon text-xl'
-                          />
-                          Setting
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3'
-                          to='#'
+                        <button
+                          onClick={handleLogout}
+                          className='dropdown-item text-black px-0 py-8 hover-bg-transparent hover-text-danger d-flex align-items-center gap-3 w-100'
                         >
                           <Icon icon='lucide:power' className='icon text-xl' />{" "}
                           Log Out
-                        </Link>
+                        </button>
                       </li>
                     </ul>
                   </div>
@@ -647,20 +643,6 @@ const MasterLayout = ({ children }) => {
 
         {/* dashboard-main-body */}
         <div className='dashboard-main-body'>{children}</div>
-
-        {/* Footer section */}
-        <footer className='d-footer'>
-          <div className='row align-items-center justify-content-between'>
-            <div className='col-auto'>
-              <p className='mb-0'>© 2024 WowDash. All Rights Reserved.</p>
-            </div>
-            <div className='col-auto'>
-              <p className='mb-0'>
-                Made by <span className='text-primary-600'>wowtheme7</span>
-              </p>
-            </div>
-          </div>
-        </footer>
       </main>
     </section>
   );

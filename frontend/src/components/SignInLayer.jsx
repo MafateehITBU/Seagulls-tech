@@ -1,7 +1,6 @@
 import { Icon } from "@iconify/react/dist/iconify.js";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axiosInstance from "../axiosConfig";
 import { useAuth } from "../context/AuthContext";
 
 const SignInLayer = () => {
@@ -9,6 +8,7 @@ const SignInLayer = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -16,17 +16,10 @@ const SignInLayer = () => {
     e.preventDefault();
     setError("");
     try {
-      const response = await axiosInstance.post("/admin/signin", {
-        email,
-        password,
-      });
-      
-      // Use the context login function
-      login(response.data.token, response.data.position, response.data.id);
-
-      if (response.data.position === "admin" || response.data.position === "superadmin") {
+      const response = await login(email, password);
+      if (response.position === "admin" || response.position === "superadmin") {
         navigate("/");
-      } else if (response.data.position === "tech") {
+      } else if (response.position === "tech") {
         navigate("/tech/dashboard");
       }
     } catch (err) {
@@ -34,6 +27,10 @@ const SignInLayer = () => {
       setError(err.response?.data?.message || "Something went wrong. Please try again.");
     }
   }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <section className='auth bg-base d-flex flex-wrap'>
@@ -46,7 +43,7 @@ const SignInLayer = () => {
         <div className='max-w-464-px mx-auto w-100'>
           <div>
             <Link to='/' className='mb-40 max-w-290-px'>
-              <img src='assets/images/logo.png' alt='Seagulls Logo' />
+              <img src='/assets/images/seagulls/flawless-dark.png' alt='Seagulls Logo' />
             </Link>
             <h4 className='mb-12'>Sign In to your Account</h4>
             <p className='mb-32 text-secondary-light text-lg'>
@@ -86,7 +83,7 @@ const SignInLayer = () => {
                   <Icon icon='solar:lock-password-outline' />
                 </span>
                 <input
-                  type='password'
+                  type={showPassword ? 'text' : 'password'}
                   className='form-control h-56-px bg-neutral-50 radius-12'
                   placeholder='Password'
                   id="password"
@@ -96,9 +93,11 @@ const SignInLayer = () => {
                 />
               </div>
               <span
-                className='toggle-password ri-eye-line cursor-pointer position-absolute end-0 top-50 translate-middle-y me-16 text-secondary-light'
-                data-toggle='#your-password'
-              />
+                className='toggle-password cursor-pointer position-absolute end-0 top-50 translate-middle-y me-16 text-secondary-light'
+                onClick={togglePasswordVisibility}
+              >
+                <Icon icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} />
+              </span>
             </div>
             <button
               type='submit'
