@@ -7,7 +7,6 @@ import ReportModal from '../../components/ReportModal';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CreateTicketModal from './CreateCleaningTicketModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
@@ -22,7 +21,6 @@ const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
 const CleaningLayer = () => {
     const [tickets, setTickets] = useState([]);
     const [selectedReport, setSelectedReport] = useState(null);
-    const [showModal, setShowModal] = useState(false); // State to manage modal visibility
 
     useEffect(() => {
         fetchData();
@@ -30,30 +28,10 @@ const CleaningLayer = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axiosInstance.get('/ticket/cleaning-tickets');
+            const response = await axiosInstance.get('/ticket/closed-cleaning');
             setTickets(response.data);
         } catch (error) {
             console.error('Error fetching data:', error);
-        }
-    };
-
-    const handleDelete = async (cleaningId) => {
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: 'This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await axiosInstance.delete(`/cleaning/${cleaningId}`);
-                setTickets(prev => prev.filter(t => t._id !== cleaningId));
-                toast.success('Ticket deleted successfully!', { position: "top-right" });
-            } catch (error) {
-                toast.error('Failed to delete the ticket.', { position: "top-right" });
-            }
         }
     };
 
@@ -102,15 +80,6 @@ const CleaningLayer = () => {
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
         },
         {
-            Header: 'Approved',
-            accessor: row => row.ticketId?.approved,
-            Cell: ({ value }) => (
-                <span className={`badge ${value ? 'bg-success' : 'bg-danger'}`}>
-                    {value ? 'Approved' : 'Not Approved'}
-                </span>
-            ),
-        },
-        {
             Header: 'Status',
             accessor: row => row.ticketId?.status,
             Cell: ({ row }) => {
@@ -154,17 +123,6 @@ const CleaningLayer = () => {
                 ) : '—';
             },
         },
-        {
-            Header: 'Delete',
-            Cell: ({ row }) => (
-                <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(row.original._id)}
-                >
-                    <Icon icon="mdi:delete" />
-                </button>
-            ),
-        },
     ], []);
 
     const {
@@ -181,16 +139,9 @@ const CleaningLayer = () => {
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className='card-title mb-0'>Cleaning Tickets</h5>
+                <h5 className='card-title mb-0'>Closed Cleaning Tickets</h5>
 
                 <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
-                <button
-                    className="btn btn-success ml-3"
-                    onClick={() => setShowModal(true)} // Show modal on button click
-                >
-                    + Create New Ticket
-                </button>
-
             </div>
             <div className="card-body">
                 {tickets.length === 0 ? (
@@ -202,7 +153,7 @@ const CleaningLayer = () => {
                                 {headerGroups.map(headerGroup => (
                                     <tr {...headerGroup.getHeaderGroupProps()}>
                                         {headerGroup.headers.map(column => (
-                                            <th {...column.getHeaderProps(column.getSortByToggleProps())}>
+                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center' }}>
                                                 {column.render('Header')}
                                                 {' '}
                                                 {column.isSorted ? (
@@ -221,7 +172,7 @@ const CleaningLayer = () => {
                                     return (
                                         <tr {...row.getRowProps()}>
                                             {row.cells.map(cell => (
-                                                <td {...cell.getCellProps()}>
+                                                <td {...cell.getCellProps()} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                                                     {cell.render('Cell')}
                                                 </td>
                                             ))}
@@ -240,13 +191,6 @@ const CleaningLayer = () => {
                     onClose={() => setSelectedReport(null)}
                 />
             )}
-
-            {/* Create New Ticket Modal */}
-            <CreateTicketModal
-                show={showModal}
-                handleClose={() => setShowModal(false)} // Close the modal
-                fetchData={fetchData} // Pass fetchData to refresh the ticket list after creating a new ticket
-            />
         </div>
     );
 };

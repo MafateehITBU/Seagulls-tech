@@ -2,10 +2,8 @@ import Ticket from "../models/Ticket.js";
 import Maintenance from "../models/Maintenance.js";
 import Accident from "../models/Accident.js";
 import Cleaning from "../models/Cleaning.js";
-import Report from "../models/Report.js";
 import Asset from "../models/Asset.js";
-import Admin from "../models/Admin.js";
-import Tech from "../models/Tech.js";
+import SparePart from "../models/SparePart.js";
 
 /**----------------------------------------
  * @desc Get the tickets that are closed and associated with the cleaning
@@ -137,7 +135,7 @@ export const getClosedMaintTickets = async (req, res) => {
  * @access Private
  * @position admin, superadmin
  -----------------------------------------*/
- export const getMaintTickets = async (req, res) => {
+export const getMaintTickets = async (req, res) => {
     try {
         const maintTickets = await Maintenance.find({})
             .populate({
@@ -205,7 +203,8 @@ export const getClosedAccidentTickets = async (req, res) => {
             .populate({
                 path: 'spareParts',
                 select: 'partName'
-            });
+            })
+            .populate('rejectReportId');
 
         const closedTickets = accidentTickets
             .filter(ticket => ticket.ticketId && ticket.ticketId.status === 'Closed')
@@ -240,7 +239,7 @@ export const getClosedAccidentTickets = async (req, res) => {
  * @access Private
  * @position admin, superadmin
  -----------------------------------------*/
- export const getAccidentTickets = async (req, res) => {
+export const getAccidentTickets = async (req, res) => {
     try {
         const accidentTickets = await Accident.find({})
             .populate({
@@ -256,7 +255,8 @@ export const getClosedAccidentTickets = async (req, res) => {
             .populate({
                 path: 'spareParts',
                 select: 'partName'
-            });
+            })
+            .populate('rejectReportId');
 
         const closedTickets = accidentTickets
             .filter(ticket => ticket.ticketId && ticket.ticketId.status !== 'Closed')
@@ -322,14 +322,35 @@ export const rejectTicket = async (req, res) => {
 export const approveTicket = async (req, res) => {
     const { ticketId } = req.params;
     try {
-        // Find the ticket by ID and update its status to "Approved"
         const ticket = await Ticket.findByIdAndUpdate(ticketId, {
             approved: true,
-            status: 'In Progress'
         }, { new: true });
 
         if (!ticket) {
             return res.status(404).json({ message: "Ticket not found" });
+        }
+
+        // Find if it's a Maintenance or Accident ticket
+        let spareTicket = await Maintenance.findOne({ ticketId }).populate('spareParts');
+        if (!spareTicket) {
+            spareTicket = await Accident.findOne({ ticketId }).populate('spareParts');
+        }
+
+        if (spareTicket && spareTicket.requireSpareParts) {
+            // spareParts is an array of SparePart documents
+            for (const sparePart of spareTicket.spareParts) {
+                const updatedSparePart = await SparePart.findOneAndUpdate(
+                    { _id: sparePart._id, quantity: { $gt: 0 } },
+                    { $inc: { quantity: -1 } },
+                    { new: true }
+                );
+
+                if (!updatedSparePart) {
+                    return res.status(400).json({
+                        message: `Spare Part with ID ${sparePart._id} is invalid or out of stock`,
+                    });
+                }
+            }
         }
 
         res.status(200).json({ message: "Ticket approved successfully", ticket });
@@ -337,7 +358,7 @@ export const approveTicket = async (req, res) => {
         console.error(error);
         res.status(500).json({ message: "Server error" });
     }
-}
+};
 
 /**---------------------------------------
  * @desc Close a ticket

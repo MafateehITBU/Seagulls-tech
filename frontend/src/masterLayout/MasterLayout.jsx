@@ -153,7 +153,7 @@ const MasterLayout = ({ children }) => {
               <ul className='sidebar-submenu'>
                 <li>
                   <NavLink
-                    to='/invoice-list'
+                    to='/accident'
                     className={(navData) =>
                       navData.isActive ? "active-page" : ""
                     }
@@ -175,7 +175,49 @@ const MasterLayout = ({ children }) => {
                 </li>
                 <li>
                   <NavLink
-                    to='/invoice-add'
+                    to='/maintenance'
+                    className={(navData) =>
+                      navData.isActive ? "active-page" : ""
+                    }
+                  >
+                    <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
+                    Maintenance
+                  </NavLink>
+                </li>
+              </ul>
+            </li>
+
+            <li className='dropdown mt-2'>
+              <Link to='#'>
+                <Icon icon='hugeicons:invoice-03' className='menu-icon' />
+                <span>Archive</span>
+              </Link>
+              <ul className='sidebar-submenu'>
+                <li>
+                  <NavLink
+                    to='/admin/accident'
+                    className={(navData) =>
+                      navData.isActive ? "active-page" : ""
+                    }
+                  >
+                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
+                    Accident
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to='/admin/cleaning'
+                    className={(navData) =>
+                      navData.isActive ? "active-page" : ""
+                    }
+                  >
+                    <i className='ri-circle-fill circle-icon text-warning-main w-auto' />
+                    Cleaning
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to='/admin/maintenance'
                     className={(navData) =>
                       navData.isActive ? "active-page" : ""
                     }
@@ -232,7 +274,7 @@ const MasterLayout = ({ children }) => {
               <div className='d-flex flex-wrap align-items-center gap-3'>
                 {/* ThemeToggleButton */}
                 <ThemeToggleButton />
-               
+
                 {/* Language dropdown end */}
                 <div className='dropdown'>
                   <button

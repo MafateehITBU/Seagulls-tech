@@ -1,10 +1,10 @@
 import React from "react";
 import MasterLayout from "../../masterLayout/MasterLayout";
 import Breadcrumb from "../../components/Breadcrumb";
-import CleaningLayer from "../../components/tickets/CleaningLayer";
+import AccidentLayer from "../../components/tickets/AccidentLayer";
 import { useAuth } from '../../context/AuthContext';
 
-const CleaningPage = () => {
+const AccidentPage = () => {
   const { user } = useAuth();
 
   return (
@@ -14,11 +14,10 @@ const CleaningPage = () => {
       <MasterLayout>
 
         {/* Breadcrumb */}
-        <Breadcrumb title="Cleaning Tickets" />
+        <Breadcrumb title="Accident Tickets" />
 
-
-        {/* CleaningLayer */}
-        {(user.position === 'admin' || user.position === 'superadmin') && <CleaningLayer />}
+        {/* AccidentLayer */}
+        {(user.position === 'admin' || user.position === 'superadmin') && <AccidentLayer />}
 
       </MasterLayout>
 
@@ -26,4 +25,4 @@ const CleaningPage = () => {
   );
 };
 
-export default CleaningPage; 
+export default AccidentPage; 

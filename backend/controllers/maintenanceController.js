@@ -60,20 +60,6 @@ export const createMaintenanceTicket = async (req, res) => {
             spareParts = Array.isArray(req.body.spareParts)
                 ? req.body.spareParts
                 : JSON.parse(req.body.spareParts || '[]');
-
-            for (const sparePartId of spareParts) {
-                const updatedSparePart = await SparePart.findOneAndUpdate(
-                    { _id: sparePartId, quantity: { $gt: 0 } },
-                    { $inc: { quantity: -1 } },
-                    { new: true }
-                );
-
-                if (!updatedSparePart) {
-                    return res.status(400).json({
-                        message: `Spare Part with ID ${sparePartId} is invalid or out of stock`,
-                    });
-                }
-            }
         }
 
         // Create the ticket
@@ -446,7 +432,7 @@ export const closeMaint = async (req, res) => {
         if (!ticket.approved) {
             return res.status(400).json({ message: "Ticket not approved, you can't close it yet." });
         }
-        
+
         maint.status = 'Closed';
         await maint.save();
 

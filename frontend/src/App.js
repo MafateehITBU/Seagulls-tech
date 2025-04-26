@@ -4,7 +4,14 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SignInPage from "./pages/SignInPage";
 import HomePageTen from "./pages/HomePageTen";
 import CleaningPage from "./pages/tickets/CleaningPage";
+<<<<<<< Updated upstream
 import ProfilePage from "./pages/ProfilePage";
+=======
+import MaintenancePage from "./pages/tickets/MaintenancePage";
+import AccidentPage from "./pages/tickets/AccidentPage";
+import ClosedCleaningPage from "./pages/archive/ClosedCleaningPage";
+
+>>>>>>> Stashed changes
 function App() {
   return (
     <BrowserRouter>
@@ -12,7 +19,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/sign-in" element={<SignInPage />} />
-        
+
         {/* Protected routes with position checks */}
         <Route
           path="/"
@@ -22,6 +29,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+<<<<<<< Updated upstream
           <Route
           path="/profile"
           element={
@@ -31,6 +39,9 @@ function App() {
           }
         />
         
+=======
+
+>>>>>>> Stashed changes
         <Route
           path="/cleaning"
           element={
@@ -39,17 +50,36 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
+        <Route
+          path="/accident"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin', 'tech']}>
+              <AccidentPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/maintenance"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin', 'tech']}>
+              <MaintenancePage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin routes */}
         <Route
           path="/admin/*"
           element={
             <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
               {/* Admin specific components */}
+              <ClosedCleaningPage />
             </ProtectedRoute>
           }
         />
-        
+
         {/* Tech routes */}
         <Route
           path="/tech/dashboard"
@@ -59,7 +89,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/tech/*"
           element={
@@ -68,7 +98,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         {/* Superadmin routes */}
         <Route
           path="/superadmin/*"
@@ -78,7 +108,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         {/* Catch all route - redirect to signin if not authenticated */}
         <Route
           path="*"
