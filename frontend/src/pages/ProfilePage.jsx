@@ -1,7 +1,7 @@
 import React from 'react'
 import MasterLayout from '../masterLayout/MasterLayout'
 import Breadcrumb from '../components/Breadcrumb'
-import TableDataLayer from '../components/TableDataLayer'
+import ProfilePageLayer from '../components/ProfilePageLayer'
 function ProfilePage() {
     return (
         <>
@@ -12,7 +12,7 @@ function ProfilePage() {
             {/* Breadcrumb */}
             <Breadcrumb title="Profile Page" />
     
-            
+            <ProfilePageLayer />
     
           </MasterLayout>
     

@@ -39,16 +39,24 @@ adminSchema.pre('save', async function (next) {
     next();
 });
 
-// This will generate a default avatar URL using the name of the admin
 adminSchema.pre('save', function (next) {
     const encodedName = encodeURIComponent(this.name);
 
     if (!this.photo) {
-        // If no photo set at all
         this.photo = `https://ui-avatars.com/api/?name=${encodedName}&size=128`;
-    } else if (this.isModified('name') && this.photo.includes('ui-avatars.com')) {
-        // If name changed AND photo is from ui-avatars, regenerate it
-        this.photo = `https://ui-avatars.com/api/?name=${encodedName}&size=128`;
+        return next();
+    }
+
+    if (this.isModified('name')) {
+        if (this.isModified('photo')) {
+            // Both name and photo modified — do nothing
+            return next();
+        }
+
+        if (this.photo.includes('ui-avatars.com')) {
+            // Only name modified and photo is an avatar — regenerate
+            this.photo = `https://ui-avatars.com/api/?name=${encodedName}&size=128`;
+        }
     }
 
     next();

@@ -1,100 +1,195 @@
-import React from "react";
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import axiosInstance from '../../axiosConfig';
 
 const UnitCountSeven = () => {
-  return (
-    <div className='col-12'>
-      <div className='card radius-12'>
-        <div className='card-body p-16'>
-          <div className='row gy-4'>
-            <div className='col-xxl-3 col-xl-4 col-sm-6'>
-              <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-1 left-line line-bg-primary position-relative overflow-hidden'>
-                <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
-                  <div>
-                    <span className='mb-2 fw-medium text-secondary-light text-md'>
-                      Gross Sales
-                    </span>
-                    <h6 className='fw-semibold mb-1'>$40,000</h6>
-                  </div>
-                  <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-primary-100 text-primary-600'>
-                    <i className='ri-shopping-cart-fill' />
-                  </span>
+    const [techCount, setTechCount] = useState(0);
+    const [cleaningTickets, setCleaningTickets] = useState([]);
+    const [maintenanceTickets, setMaintenanceTickets] = useState([]);
+    const [accidentTickets, setAccidentTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { user } = useAuth();
+
+    useEffect(() => {
+        const fetchTechCount = async () => {
+            try {
+                const response = await axiosInstance.get('/tech');
+                setTechCount(response.data.techs.length);
+            } catch (error) {
+                console.error('Error fetching tech count:', error);
+            }
+        };
+
+        const fetchTickets = async () => {
+            try {
+                // Fetch cleaning tickets
+                try {
+                    const cleaningResponse = await axiosInstance.get('/ticket/cleaning-tickets');
+                    console.log('Cleaning tickets response:', cleaningResponse.data);
+                    if (Array.isArray(cleaningResponse.data)) {
+                        setCleaningTickets(cleaningResponse.data);
+                    } else {
+                        setCleaningTickets([]);
+                    }
+                } catch (cleaningError) {
+                    console.error('Error fetching cleaning tickets:', cleaningError);
+                    setCleaningTickets([]);
+                }
+
+                // Fetch maintenance tickets
+                try {
+                    const maintenanceResponse = await axiosInstance.get('/ticket/maintenance-tickets');
+                    console.log('Maintenance tickets response:', maintenanceResponse.data);
+                    if (Array.isArray(maintenanceResponse.data)) {
+                        setMaintenanceTickets(maintenanceResponse.data);
+                    } else {
+                        setMaintenanceTickets([]);
+                    }
+                } catch (maintenanceError) {
+                    console.error('Error fetching maintenance tickets:', maintenanceError);
+                    setMaintenanceTickets([]);
+                }
+
+                // Fetch accident tickets
+                try {
+                    const accidentResponse = await axiosInstance.get('/ticket/accident-tickets');
+                    console.log('Accident tickets response:', accidentResponse.data);
+                    if (Array.isArray(accidentResponse.data)) {
+                        setAccidentTickets(accidentResponse.data);
+                    } else {
+                        setAccidentTickets([]);
+                    }
+                } catch (accidentError) {
+                    console.error('Error fetching accident tickets:', accidentError);
+                    setAccidentTickets([]);
+                }
+            } catch (error) {
+                console.error('General error in fetchTickets:', error);
+                setError('Failed to load tickets');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTechCount();
+        fetchTickets();
+    }, []);
+
+    return (
+        <>
+            <div className='col-12'>
+                <div className='card radius-12'>
+                    <div className='card-body p-16'>
+                        <div className='row gy-4'>
+                            <div className='col-xxl-3 col-xl-4 col-sm-6'>
+                                <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-1 left-line line-bg-primary position-relative overflow-hidden'>
+                                    <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
+                                        <div>
+                                            <span className='mb-2 fw-medium text-secondary-light text-md'>
+                                                Technicians
+                                            </span>
+                                            <h6 className='fw-semibold mb-1'>
+                                                {loading ? (
+                                                    <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                                                ) : (
+                                                    techCount
+                                                )}
+                                            </h6>
+                                        </div>
+                                        <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-primary-100 text-primary-600'>
+                                            <i className='ri-user-settings-line' />
+                                        </span>
+                                    </div>
+                                    <p className='text-sm mb-0'>
+                                        Total Technicians{" "}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='col-xxl-3 col-xl-4 col-sm-6'>
+                                <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-2 left-line line-bg-lilac position-relative overflow-hidden'>
+                                    <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
+                                        <div>
+                                            <span className='mb-2 fw-medium text-secondary-light text-md'>
+                                                Cleaning Tickets
+                                            </span>
+                                            <h6 className='fw-semibold mb-1'>
+                                                {loading ? (
+                                                    <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                                                ) : error ? (
+                                                    <span className="text-danger-main">Error</span>
+                                                ) : (
+                                                    cleaningTickets.length
+                                                )}
+                                            </h6>
+                                        </div>
+                                        <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-lilac-200 text-lilac-600'>
+                                            <i className='ri-brush-fill' />
+                                        </span>
+                                    </div>
+                                    <p className='text-sm mb-0'>
+                                         Opened Cleaning Tickets{" "}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='col-xxl-3 col-xl-4 col-sm-6'>
+                                <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-3 left-line line-bg-success position-relative overflow-hidden'>
+                                    <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
+                                        <div>
+                                            <span className='mb-2 fw-medium text-secondary-light text-md'>
+                                                Maintenance Tickets
+                                            </span>
+                                            <h6 className='fw-semibold mb-1'>
+                                                {loading ? (
+                                                    <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                                                ) : error ? (
+                                                    <span className="text-danger-main">Error</span>
+                                                ) : (
+                                                    maintenanceTickets.length
+                                                )}
+                                            </h6>
+                                        </div>
+                                        <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-success-200 text-success-600'>
+                                            <i className='ri-tools-fill' />
+                                        </span>
+                                    </div>
+                                    <p className='text-sm mb-0'>
+                                         Opened Maintenance Tickets{" "}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='col-xxl-3 col-xl-4 col-sm-6'>
+                                <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-4 left-line line-bg-warning position-relative overflow-hidden'>
+                                    <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
+                                        <div>
+                                            <span className='mb-2 fw-medium text-secondary-light text-md'>
+                                                Accident Tickets
+                                            </span>
+                                            <h6 className='fw-semibold mb-1'>
+                                                {loading ? (
+                                                    <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                                                ) : error ? (
+                                                    <span className="text-danger-main">Error</span>
+                                                ) : (
+                                                    accidentTickets.length
+                                                )}
+                                            </h6>
+                                        </div>
+                                        <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-warning-focus text-warning-600'>
+                                            <i className='ri-error-warning-fill' />
+                                        </span>
+                                    </div>
+                                    <p className='text-sm mb-0'>
+                                         Opened Accident Tickets{" "}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p className='text-sm mb-0'>
-                  <span className='bg-success-focus px-1 rounded-2 fw-medium text-success-main text-sm'>
-                    <i className='ri-arrow-right-up-line' /> 80%
-                  </span>{" "}
-                  From last month{" "}
-                </p>
-              </div>
             </div>
-            <div className='col-xxl-3 col-xl-4 col-sm-6'>
-              <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-2 left-line line-bg-lilac position-relative overflow-hidden'>
-                <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
-                  <div>
-                    <span className='mb-2 fw-medium text-secondary-light text-md'>
-                      Total Purchase
-                    </span>
-                    <h6 className='fw-semibold mb-1'>$35,000</h6>
-                  </div>
-                  <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-lilac-200 text-lilac-600'>
-                    <i className='ri-handbag-fill' />
-                  </span>
-                </div>
-                <p className='text-sm mb-0'>
-                  <span className='bg-success-focus px-1 rounded-2 fw-medium text-success-main text-sm'>
-                    <i className='ri-arrow-right-up-line' /> 95%
-                  </span>{" "}
-                  From last month{" "}
-                </p>
-              </div>
-            </div>
-            <div className='col-xxl-3 col-xl-4 col-sm-6'>
-              <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-3 left-line line-bg-success position-relative overflow-hidden'>
-                <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
-                  <div>
-                    <span className='mb-2 fw-medium text-secondary-light text-md'>
-                      Total Income
-                    </span>
-                    <h6 className='fw-semibold mb-1'>$30,000</h6>
-                  </div>
-                  <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-success-200 text-success-600'>
-                    <i className='ri-shopping-cart-fill' />
-                  </span>
-                </div>
-                <p className='text-sm mb-0'>
-                  <span className='bg-danger-focus px-1 rounded-2 fw-medium text-danger-main text-sm'>
-                    <i className='ri-arrow-right-down-line' /> 30%
-                  </span>{" "}
-                  From last month{" "}
-                </p>
-              </div>
-            </div>
-            <div className='col-xxl-3 col-xl-4 col-sm-6'>
-              <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-4 left-line line-bg-warning position-relative overflow-hidden'>
-                <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
-                  <div>
-                    <span className='mb-2 fw-medium text-secondary-light text-md'>
-                      Total Expense
-                    </span>
-                    <h6 className='fw-semibold mb-1'>$7,000</h6>
-                  </div>
-                  <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-warning-focus text-warning-600'>
-                    <i className='ri-shopping-cart-fill' />
-                  </span>
-                </div>
-                <p className='text-sm mb-0'>
-                  <span className='bg-success-focus px-1 rounded-2 fw-medium text-success-main text-sm'>
-                    <i className='ri-arrow-right-up-line' /> 60%
-                  </span>{" "}
-                  From last month{" "}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+        </>
+    );
 };
 
 export default UnitCountSeven;

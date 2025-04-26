@@ -123,7 +123,13 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    isAuthenticated: !!user?.id
+    isAuthenticated: !!user?.id,
+    updateUser: (newUserData) => {
+      setUser(prev => ({
+        ...prev,
+        ...newUserData
+      }));
+    }
   };
 
   return (
