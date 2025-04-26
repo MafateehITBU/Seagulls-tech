@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useTable, useGlobalFilter, useSortBy } from 'react-table';
 import { Icon } from '@iconify/react';
 import axiosInstance from "../../axiosConfig";
-import ReportModal from '../../components/ReportModal';
+import ReportModal from '../ReportModal';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
+import CrocaReportModal from '../CrocaReportModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
@@ -17,9 +18,12 @@ const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     />
 );
 
-const CleaningLayer = () => {
+const AccidentLayer = () => {
     const [tickets, setTickets] = useState([]);
     const [selectedReport, setSelectedReport] = useState(null);
+    const [selectedCroca, setSelectedCroca] = useState(null);
+    const [showCrocaModal, setShowCrocaModal] = useState(false);
+
 
     useEffect(() => {
         fetchData();
@@ -27,7 +31,7 @@ const CleaningLayer = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axiosInstance.get('/ticket/closed-cleaning');
+            const response = await axiosInstance.get('/ticket/closed-accident');
             setTickets(response.data);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -69,6 +73,15 @@ const CleaningLayer = () => {
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
         },
         {
+            Header: 'Approved',
+            accessor: row => row.ticketId?.approved,
+            Cell: ({ value }) => (
+                <span className={`badge ${value ? 'bg-success' : 'bg-danger'}`}>
+                    {value ? 'Approved' : 'Not Approved'}
+                </span>
+            ),
+        },
+        {
             Header: 'Status',
             accessor: row => row.ticketId?.status,
             Cell: ({ row }) => {
@@ -80,6 +93,36 @@ const CleaningLayer = () => {
             accessor: row => row.reportId,
             Cell: ({ row }) => {
                 const report = row.original.reportId;
+                return report ? (
+                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                ) : '—';
+            },
+        },
+        {
+            Header: 'Croca',
+            accessor: row => row.croca,
+            Cell: ({ row }) => {
+                const croca = row.original.croca;
+                return croca ? (
+                    <span
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => {
+                            setSelectedCroca(croca);
+                            setShowCrocaModal(true);
+                        }}
+                    >
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                ) : '—';
+            },
+        },
+        {
+            Header: 'Reject Report',
+            accessor: row => row.rejectReportId,
+            Cell: ({ row }) => {
+                const report = row.original.rejectReportId;
                 return report ? (
                     <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
                         <Icon icon="mdi:clipboard-text" />
@@ -103,9 +146,10 @@ const CleaningLayer = () => {
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className='card-title mb-0'>Closed Cleaning Tickets</h5>
+                <h5 className='card-title mb-0'>Closed Accident Tickets</h5>
 
                 <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
+
             </div>
             <div className="card-body">
                 {tickets.length === 0 ? (
@@ -123,7 +167,8 @@ const CleaningLayer = () => {
                                                 {column.isSorted ? (
                                                     column.isSortedDesc ? <FaSortDown /> : <FaSortUp />
                                                 ) : (
-                                                    <FaSort style={{ opacity: 0.3 }} />
+                                                    <FaSort style={{ opacity: 0.3 }}
+                                                    />
                                                 )}
                                             </th>
                                         ))}
@@ -155,8 +200,15 @@ const CleaningLayer = () => {
                     onClose={() => setSelectedReport(null)}
                 />
             )}
+
+            {showCrocaModal && (
+                <CrocaReportModal
+                    croca={selectedCroca}
+                    onClose={() => setShowCrocaModal(false)}
+                />
+            )}
         </div>
     );
 };
 
-export default CleaningLayer;
+export default AccidentLayer;

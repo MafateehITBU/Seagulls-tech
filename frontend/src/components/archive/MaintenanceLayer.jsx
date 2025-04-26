@@ -17,7 +17,7 @@ const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     />
 );
 
-const CleaningLayer = () => {
+const MaintenanceLayer = () => {
     const [tickets, setTickets] = useState([]);
     const [selectedReport, setSelectedReport] = useState(null);
 
@@ -27,7 +27,7 @@ const CleaningLayer = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axiosInstance.get('/ticket/closed-cleaning');
+            const response = await axiosInstance.get('/ticket/closed-maintenance');
             setTickets(response.data);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -69,10 +69,19 @@ const CleaningLayer = () => {
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
         },
         {
+            Header: 'Approved',
+            accessor: row => row.ticketId?.approved,
+            Cell: ({ value }) => (
+                <span className={`badge ${value ? 'bg-success' : 'bg-danger'}`}>
+                    {value ? 'Approved' : 'Not Approved'}
+                </span>
+            ),
+        },
+        {
             Header: 'Status',
             accessor: row => row.ticketId?.status,
             Cell: ({ row }) => {
-                return (<span className="badge bg-success"> {row.original.ticketId.status}</span>)
+                return (<span className="badge bg-success">{row.original.ticketId.status}</span>)
             },
         },
         {
@@ -80,6 +89,18 @@ const CleaningLayer = () => {
             accessor: row => row.reportId,
             Cell: ({ row }) => {
                 const report = row.original.reportId;
+                return report ? (
+                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                ) : '—';
+            },
+        },
+        {
+            Header: 'Reject Report',
+            accessor: row => row.rejectReportId,
+            Cell: ({ row }) => {
+                const report = row.original.rejectReportId;
                 return report ? (
                     <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
                         <Icon icon="mdi:clipboard-text" />
@@ -103,9 +124,10 @@ const CleaningLayer = () => {
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className='card-title mb-0'>Closed Cleaning Tickets</h5>
+                <h5 className='card-title mb-0'>Closed Maintenance Tickets</h5>
 
                 <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
+
             </div>
             <div className="card-body">
                 {tickets.length === 0 ? (
@@ -123,7 +145,8 @@ const CleaningLayer = () => {
                                                 {column.isSorted ? (
                                                     column.isSortedDesc ? <FaSortDown /> : <FaSortUp />
                                                 ) : (
-                                                    <FaSort style={{ opacity: 0.3 }} />
+                                                    <FaSort style={{ opacity: 0.3 }}
+                                                    />
                                                 )}
                                             </th>
                                         ))}
@@ -159,4 +182,4 @@ const CleaningLayer = () => {
     );
 };
 
-export default CleaningLayer;
+export default MaintenanceLayer;

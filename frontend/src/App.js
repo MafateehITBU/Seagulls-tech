@@ -8,6 +8,9 @@ import ProfilePage from "./pages/ProfilePage";
 import MaintenancePage from "./pages/tickets/MaintenancePage";
 import AccidentPage from "./pages/tickets/AccidentPage";
 import ClosedCleaningPage from "./pages/archive/ClosedCleaningPage";
+import ClosedAccidentPage from "./pages/archive/ClosedAccidentPage";
+import ClosedMaintenancePage from "./pages/archive/ClosedMaintenancePage";
+import AssetsPage from "./pages/AssetsPage";
 
 function App() {
   return (
@@ -26,7 +29,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-          <Route
+        <Route
           path="/profile"
           element={
             <ProtectedRoute allowedPositions={['admin', 'superadmin', 'tech']}>
@@ -34,7 +37,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
 
         <Route
           path="/cleaning"
@@ -65,10 +68,37 @@ function App() {
 
         {/* Admin routes */}
         <Route
+          path="/admin/closed-accident"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
+              <ClosedAccidentPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/admin/closed-cleaning"
           element={
             <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
               <ClosedCleaningPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/closed-maintenance"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
+              <ClosedMaintenancePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/assets"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
+              <AssetsPage />
             </ProtectedRoute>
           }
         />

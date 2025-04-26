@@ -145,6 +145,7 @@ const MasterLayout = ({ children }) => {
                 <span>Dashboard</span>
               </NavLink>
             </li>
+            {/* Tickets */}
             <li className='dropdown mt-2'>
               <Link to='#'>
                 <Icon icon='hugeicons:invoice-03' className='menu-icon' />
@@ -187,18 +188,24 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
-
-
-
-
-
+            {/* Archive */}
             <li className='dropdown mt-2'>
               <Link to='#'>
                 <Icon icon='hugeicons:refresh' className='menu-icon' />
                 <span>Archive</span>
               </Link>
               <ul className='sidebar-submenu'>
-             
+                <li>
+                  <NavLink
+                    to='/admin/closed-accident'
+                    className={(navData) =>
+                      navData.isActive ? "active-page" : ""
+                    }
+                  >
+                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />
+                    Accident
+                  </NavLink>
+                </li>
                 <li>
                   <NavLink
                     to='/admin/closed-cleaning'
@@ -210,8 +217,33 @@ const MasterLayout = ({ children }) => {
                     Cleaning
                   </NavLink>
                 </li>
-                
+                <li>
+                  <NavLink
+                    to='/admin/closed-maintenance'
+                    className={(navData) =>
+                      navData.isActive ? "active-page" : ""
+                    }
+                  >
+                    <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
+                    Maintenance
+                  </NavLink>
+                </li>
+
               </ul>
+            </li>
+
+            {/* Assets */}
+            <li>
+              <NavLink
+                to='/admin/assets'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='solar:home-smile-angle-outline'
+                  className='menu-icon'
+                />
+                <span>Assets</span>
+              </NavLink>
             </li>
           </ul>
         </div>
