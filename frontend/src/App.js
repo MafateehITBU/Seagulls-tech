@@ -4,14 +4,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SignInPage from "./pages/SignInPage";
 import HomePageTen from "./pages/HomePageTen";
 import CleaningPage from "./pages/tickets/CleaningPage";
-<<<<<<< Updated upstream
 import ProfilePage from "./pages/ProfilePage";
-=======
 import MaintenancePage from "./pages/tickets/MaintenancePage";
 import AccidentPage from "./pages/tickets/AccidentPage";
 import ClosedCleaningPage from "./pages/archive/ClosedCleaningPage";
 
->>>>>>> Stashed changes
 function App() {
   return (
     <BrowserRouter>
@@ -29,7 +26,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-<<<<<<< Updated upstream
           <Route
           path="/profile"
           element={
@@ -39,9 +35,7 @@ function App() {
           }
         />
         
-=======
 
->>>>>>> Stashed changes
         <Route
           path="/cleaning"
           element={
@@ -71,10 +65,9 @@ function App() {
 
         {/* Admin routes */}
         <Route
-          path="/admin/*"
+          path="/admin/closed-cleaning"
           element={
             <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
-              {/* Admin specific components */}
               <ClosedCleaningPage />
             </ProtectedRoute>
           }

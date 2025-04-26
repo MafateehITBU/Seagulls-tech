@@ -115,17 +115,17 @@ const MasterLayout = ({ children }) => {
         <div>
           <Link to='/' className='sidebar-logo'>
             <img
-              src='assets/images/seagulls/MainLogo.svg'
+              src='/assets/images/seagulls/MainLogo.svg'
               alt='site logo'
               className='light-logo'
             />
             <img
-              src='assets/images/seagulls/MainLogo.svg'
+              src='/assets/images/seagulls/MainLogo.svg'
               alt='site logo'
               className='dark-logo'
             />
             <img
-              src='assets/images/seagulls/MainLogo.svg'
+              src='/assets/images/seagulls/MainLogo.svg'
               alt='site logo'
               className='logo-icon'
             />
@@ -187,26 +187,21 @@ const MasterLayout = ({ children }) => {
               </ul>
             </li>
 
+
+
+
+
+
             <li className='dropdown mt-2'>
               <Link to='#'>
                 <Icon icon='hugeicons:invoice-03' className='menu-icon' />
-                <span>Archive</span>
+                <span>Tickets</span>
               </Link>
               <ul className='sidebar-submenu'>
+             
                 <li>
                   <NavLink
-                    to='/admin/accident'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
-                    Accident
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to='/admin/cleaning'
+                    to='/admin/closed-cleaning'
                     className={(navData) =>
                       navData.isActive ? "active-page" : ""
                     }
@@ -215,20 +210,9 @@ const MasterLayout = ({ children }) => {
                     Cleaning
                   </NavLink>
                 </li>
-                <li>
-                  <NavLink
-                    to='/admin/maintenance'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
-                    Maintenance
-                  </NavLink>
-                </li>
+                
               </ul>
             </li>
-
           </ul>
         </div>
       </aside>
