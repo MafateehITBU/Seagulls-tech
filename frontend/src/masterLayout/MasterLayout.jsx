@@ -9,7 +9,7 @@ const MasterLayout = ({ children }) => {
   let [mobileMenu, setMobileMenu] = useState(false);
   const location = useLocation(); // Hook to get the current route
   const navigate = useNavigate();
-  const { userData, loading, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   useEffect(() => {
     const handleDropdownClick = (event) => {
@@ -579,9 +579,12 @@ const MasterLayout = ({ children }) => {
                       <div className="w-40-px h-40-px rounded-circle bg-neutral-200 animate-pulse" />
                     ) : (
                       <img
-                        src={userData?.photo || 'assets/images/user.png'}
+                        src={user?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&size=128`}
                         alt='user'
                         className='w-40-px h-40-px object-fit-cover rounded-circle'
+                        onError={(e) => {
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&size=128`;
+                        }}
                       />
                     )}
                   </button>
@@ -592,22 +595,19 @@ const MasterLayout = ({ children }) => {
                           {loading ? (
                             <div className="h-6 w-32 bg-neutral-200 rounded animate-pulse" />
                           ) : (
-                            userData?.name || 'User'
+                            user?.name || user?.email || 'User'
                           )}
                         </h6>
                         <span className='text-secondary-light fw-medium text-sm'>
                           {loading ? (
                             <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse" />
                           ) : (
-                            userData?.position || 'User'
+                            user?.position || 'User'
                           )}
                         </span>
                       </div>
                       <button type='button' className='hover-text-danger'>
-                        <Icon
-                          icon='radix-icons:cross-1'
-                          className='icon text-xl'
-                        />
+                        <Icon icon='radix-icons:cross-1' className='icon text-xl' />
                       </button>
                     </div>
                     <ul className='to-top-list'>

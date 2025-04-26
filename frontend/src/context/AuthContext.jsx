@@ -6,46 +6,76 @@ import { jwtDecode } from 'jwt-decode';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState(null);
+  const [user, setUser] = useState({
+    id: null,
+    position: null,
+    name: null,
+    email: null,
+    photo: null,
+    phone: null,
+    bio: null
+  });
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId) => {
+  const fetchUserData = async (userId, position) => {
     try {
-      if (!userId) return;
-      
-      const position = user?.position;
-      if (!position) return;
+      const token = Cookie.get('token');
+      if (!token) return;
 
-      const endpoint = position === 'tech' 
-        ? `http://localhost:8000/api/tech/${userId}`
-        : `http://localhost:8000/api/admin/${userId}`;
-      
-      const response = await axiosInstance.get(endpoint);
-      setUserData(response.data);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
+      const endpoint = position === 'admin' || position === 'superadmin' 
+        ? `/admin/${userId}`
+        : `/tech/${userId}`;
+
+      const response = await axiosInstance.get(endpoint, config);
+
+      if (!response.data) return;
+
+      setUser({
+        id: response.data._id || userId,
+        position: position,
+        name: response.data.name || '',
+        email: response.data.email || '',
+        photo: response.data.photo || '',
+        phone: response.data.phone || '',
+        bio: response.data.bio || ''
+      });
+
     } catch (error) {
       console.error('Error fetching user data:', error);
-      setUserData(null);
     }
   };
 
   useEffect(() => {
-    const token = Cookie.get('token');
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        const userInfo = {
-          id: decoded.id,
-          position: decoded.position
-        };
-        setUser(userInfo);
-        fetchUserData(decoded.id);
-      } catch (error) {
-        console.error('Error decoding token:', error);
-        Cookie.remove('token');
+    const initializeUser = async () => {
+      const token = Cookie.get('token');
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          const { id, position } = decoded;
+
+          setUser(prev => ({
+            ...prev,
+            id,
+            position
+          }));
+
+          await fetchUserData(id, position);
+
+        } catch (error) {
+          console.error('Error initializing user:', error);
+          Cookie.remove('token');
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    initializeUser();
   }, []);
 
   const login = async (email, password) => {
@@ -58,33 +88,42 @@ export const AuthProvider = ({ children }) => {
       Cookie.set("token", response.data.token, { expires: 1 });
       
       const decoded = jwtDecode(response.data.token);
-      const userInfo = {
-        id: decoded.id,
-        position: decoded.position
-      };
-      setUser(userInfo);
-      await fetchUserData(decoded.id);
+      const { id, position } = decoded;
+
+      setUser(prev => ({
+        ...prev,
+        id,
+        position
+      }));
+
+      await fetchUserData(id, position);
       
       return response.data;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
 
   const logout = () => {
     Cookie.remove('token');
-    setUser(null);
-    setUserData(null);
+    setUser({
+      id: null,
+      position: null,
+      name: null,
+      email: null,
+      photo: null,
+      phone: null,
+      bio: null
+    });
   };
 
   const value = {
     user,
-    userData,
     loading,
     login,
     logout,
-    isAuthenticated: !!user,
-    fetchUserData,
+    isAuthenticated: !!user?.id
   };
 
   return (

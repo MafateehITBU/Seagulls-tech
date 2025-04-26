@@ -4,7 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import SignInPage from "./pages/SignInPage";
 import HomePageTen from "./pages/HomePageTen";
 import CleaningPage from "./pages/tickets/CleaningPage";
-
+import ProfilePage from "./pages/ProfilePage";
 function App() {
   return (
     <BrowserRouter>
@@ -19,6 +19,14 @@ function App() {
           element={
             <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
               <HomePageTen />
+            </ProtectedRoute>
+          }
+        />
+          <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin', 'tech']}>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />
