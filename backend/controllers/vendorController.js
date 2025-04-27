@@ -43,7 +43,7 @@ export const getAllVendors = async (req, res) => {
             // Check if the spareParts array is not empty before populating for all vendors
             for (let i = 0; i < vendors.length; i++) {
                 if (vendors[i].spareParts.length > 0) {
-                    await vendors[i].populate("spareParts", "name");
+                    await vendors[i].populate("spareParts", "partNo partName quantity");
                 }
             }
         }

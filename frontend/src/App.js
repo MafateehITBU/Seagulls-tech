@@ -12,6 +12,7 @@ import ClosedAccidentPage from "./pages/archive/ClosedAccidentPage";
 import ClosedMaintenancePage from "./pages/archive/ClosedMaintenancePage";
 import AssetsPage from "./pages/AssetsPage";
 import TechniciansPage from "./pages/TechniciansPage";
+import VendorPage from "./pages/VendorPage";
 
 function App() {
   return (
@@ -108,6 +109,15 @@ function App() {
           element={
             <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
               <AssetsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/vendors"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
+              <VendorPage />
             </ProtectedRoute>
           }
         />

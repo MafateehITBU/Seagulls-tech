@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useTable, useGlobalFilter, useSortBy } from 'react-table';
 import { Icon } from '@iconify/react';
 import axiosInstance from "../../axiosConfig";
-import ReportModal from '../ReportModal';
+import ReportModal from '../modals/ReportModal';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CrocaReportModal from '../CrocaReportModal';
+import CrocaReportModal from '../modals/CrocaReportModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-import axiosInstance from '../axiosConfig';
+import axiosInstance from '../../axiosConfig';
 import { toast } from 'react-toastify';
 
 const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
@@ -94,7 +94,7 @@ const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
     };
 
     return (
-        <Modal show={show} onHide={handleClose} size="lg" centered scrollable> 
+        <Modal show={show} onHide={handleClose} size="lg" centered scrollable>
             <Modal.Header closeButton>
                 <Modal.Title>Edit Asset</Modal.Title>
             </Modal.Header>

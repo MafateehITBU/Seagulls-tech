@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-import axiosInstance from "../axiosConfig";
+import axiosInstance from "../../axiosConfig";
 import { toast } from 'react-toastify';
 
 const CreateAssetModal = ({ show, handleClose, fetchData }) => {

@@ -3,11 +3,11 @@ import { useTable, useGlobalFilter, useSortBy } from 'react-table';
 import { Icon } from '@iconify/react';
 import Swal from 'sweetalert2';
 import axiosInstance from "../../axiosConfig";
-import ReportModal from '../../components/ReportModal';
+import ReportModal from '../modals/ReportModal';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CreateTicketModal from './CreateMaintTicket';
+import CreateTicketModal from '../modals/CreateMaintTicket';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
