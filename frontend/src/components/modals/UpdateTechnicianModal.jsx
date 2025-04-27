@@ -56,16 +56,19 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
         }
 
         try {
-            const dataToSend = {
-                name,
-                email,
-                phone,
-                dob
-            };
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('phone', phone);
+            formData.append('dob', dob);
+            
+            if (profilePic) {
+                formData.append('photo', profilePic);
+            }
 
-            await axiosInstance.put(`/tech/${technician._id}`, dataToSend, {
+            await axiosInstance.put(`/tech/${technician._id}`, formData, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'multipart/form-data'
                 }
             });
             

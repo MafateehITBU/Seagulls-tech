@@ -273,6 +273,19 @@ const MasterLayout = ({ children }) => {
                 <span>Technicians</span>
               </NavLink>
             </li>
+
+            <li>
+              <NavLink
+                to='/admins'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='line-md:account'
+                  className='menu-icon'
+                />
+                <span>Admins</span>
+              </NavLink>
+            </li>
           </ul>
         </div>
       </aside>

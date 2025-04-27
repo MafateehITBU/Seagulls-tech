@@ -5,55 +5,38 @@ import axiosInstance from "../axiosConfig";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import AddTechnicianModal from './modals/AddTechnicianModal';
-import UpdateTechnicianModal from './modals/UpdateTechnicianModal';
-import DeleteTechnicianModal from './modals/DeleteTechnicianModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
         className="form-control w-30"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search Vendor..."
+        placeholder="Search Admin..."
     />
 );
 
-const TechniciansLayer = () => {
-    const [technicians, setTechnicians] = useState([]);
+const AdminsLayer = () => {
+    const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [showUpdateModal, setShowUpdateModal] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [selectedTechnician, setSelectedTechnician] = useState(null);
 
     useEffect(() => {
-        fetchTechnicians();
+        fetchAdmins();
     }, []);
 
-    const fetchTechnicians = async () => {
+    const fetchAdmins = async () => {
         try {
-            const response = await axiosInstance.get('/tech');
-            setTechnicians(response.data.techs);
+            const response = await axiosInstance.get('/admin', {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            setAdmins(response.data);
             setLoading(false);
         } catch (error) {
-            console.error('Error fetching technicians:', error);
-            toast.error('Failed to fetch technicians');
+            console.error('Error fetching admins:', error);
+            toast.error('Failed to fetch admins');
             setLoading(false);
         }
-    };
-
-    const handleAddTechnician = () => {
-        setShowAddModal(true);
-    };
-
-    const handleUpdateTechnician = (technician) => {
-        setSelectedTechnician(technician);
-        setShowUpdateModal(true);
-    };
-
-    const handleDeleteTechnician = (technician) => {
-        setSelectedTechnician(technician);
-        setShowDeleteModal(true);
     };
 
     const columns = React.useMemo(() => [
@@ -69,6 +52,10 @@ const TechniciansLayer = () => {
                     src={value} 
                     alt="Profile" 
                     style={{ width: '40px', height: '40px', borderRadius: '50%' }} 
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://ui-avatars.com/api/?name=Admin&size=128';
+                    }}
                 />
             ),
         },
@@ -85,9 +72,17 @@ const TechniciansLayer = () => {
             accessor: 'phone',
         },
         {
-            Header: 'Date of Birth',
-            accessor: 'dob',
-            Cell: ({ value }) => new Date(value).toLocaleDateString(),
+            Header: 'Bio',
+            accessor: 'bio',
+        },
+        {
+            Header: 'Position',
+            accessor: 'position',
+            Cell: ({ value }) => (
+                <span className={`badge ${value === 'superadmin' ? 'bg-primary' : 'bg-secondary'}`}>
+                    {value}
+                </span>
+            ),
         },
         {
             Header: 'Actions',
@@ -95,13 +90,11 @@ const TechniciansLayer = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-sm btn-primary"
-                        onClick={() => handleUpdateTechnician(row.original)}
                     >
                         <Icon icon="mdi:pencil" />
                     </button>
                     <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => handleDeleteTechnician(row.original)}
                     >
                         <Icon icon="mdi:delete" />
                     </button>
@@ -118,30 +111,28 @@ const TechniciansLayer = () => {
         prepareRow,
         setGlobalFilter,
         state,
-    } = useTable({ columns, data: technicians }, useGlobalFilter, useSortBy);
+    } = useTable({ columns, data: admins }, useGlobalFilter, useSortBy);
 
     return (
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex justify-content-between align-items-center ">
-                
-                <h5 className='card-title mb-0'>Technicians</h5>
-
+                <h5 className='card-title mb-0'>Admins</h5>
+                <div className="d-flex gap-2">
                     <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
                     <button
-                        className="btn btn-success ml-3"
-                        onClick={handleAddTechnician}
+                        className="btn btn-success"
                     >
                         <Icon icon="mdi:plus" />
-                        Add New Technician
+                        Add New Admin
                     </button>
-                
+                </div>
             </div>
             <div className="card-body">
                 {loading ? (
                     <div className="text-center">Loading...</div>
-                ) : technicians.length === 0 ? (
-                    <div className="text-center">No technicians found</div>
+                ) : admins.length === 0 ? (
+                    <div className="text-center">No admins found</div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
                         <table className="table bordered-table mb-0" {...getTableProps()}>
@@ -180,28 +171,8 @@ const TechniciansLayer = () => {
                     </div>
                 )}
             </div>
-
-            <AddTechnicianModal
-                show={showAddModal}
-                handleClose={() => setShowAddModal(false)}
-                fetchTechnicians={fetchTechnicians}
-            />
-
-            <UpdateTechnicianModal
-                show={showUpdateModal}
-                handleClose={() => setShowUpdateModal(false)}
-                technician={selectedTechnician}
-                fetchTechnicians={fetchTechnicians}
-            />
-
-            <DeleteTechnicianModal
-                show={showDeleteModal}
-                handleClose={() => setShowDeleteModal(false)}
-                technician={selectedTechnician}
-                fetchTechnicians={fetchTechnicians}
-            />
         </div>
     );
 };
 
-export default TechniciansLayer; 
+export default AdminsLayer; 

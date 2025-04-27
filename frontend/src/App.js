@@ -13,7 +13,7 @@ import ClosedMaintenancePage from "./pages/archive/ClosedMaintenancePage";
 import AssetsPage from "./pages/AssetsPage";
 import TechniciansPage from "./pages/TechniciansPage";
 import VendorPage from "./pages/VendorPage";
-
+import AdminsPage from "./pages/AdminsPage";
 function App() {
   return (
     <BrowserRouter>
@@ -143,10 +143,10 @@ function App() {
 
         {/* Superadmin routes */}
         <Route
-          path="/superadmin/*"
+          path="/admins/"
           element={
             <ProtectedRoute allowedPositions={['superadmin']}>
-              {/* Superadmin specific components */}
+              <AdminsPage />
             </ProtectedRoute>
           }
         />
