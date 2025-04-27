@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useTable, useGlobalFilter, useSortBy } from 'react-table';
 import { Icon } from '@iconify/react';
-import Swal from 'sweetalert2';
 import axiosInstance from "../axiosConfig";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
+import AddTechnicianModal from './modals/AddTechnicianModal';
+import UpdateTechnicianModal from './modals/UpdateTechnicianModal';
+import DeleteTechnicianModal from './modals/DeleteTechnicianModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
@@ -20,6 +22,10 @@ const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
 const TechniciansLayer = () => {
     const [technicians, setTechnicians] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedTechnician, setSelectedTechnician] = useState(null);
 
     useEffect(() => {
         fetchTechnicians();
@@ -37,180 +43,18 @@ const TechniciansLayer = () => {
         }
     };
 
-    const validateForm = (data) => {
-        const errors = {};
-        
-        // Name validation
-        if (!data.name || data.name.trim() === '') {
-            errors.name = 'Name is required';
-        }
-
-        // Email validation
-        if (!data.email || data.email.trim() === '') {
-            errors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-            errors.email = 'Invalid email format';
-        }
-
-        // Phone validation
-        if (!data.phone || data.phone.trim() === '') {
-            errors.phone = 'Phone number is required';
-        } else if (!/^07[7-9]\d{7}$/.test(data.phone)) {
-            errors.phone = 'Phone must start with 07 followed by 7,8, or 9 and 7 digits';
-        }
-
-        // Password validation (only for new technicians)
-        if (data.password && data.password.length < 6) {
-            errors.password = 'Password must be at least 6 characters';
-        }
-
-        // DOB validation
-        if (!data.dob) {
-            errors.dob = 'Date of birth is required';
-        }
-
-        return errors;
+    const handleAddTechnician = () => {
+        setShowAddModal(true);
     };
 
-    const handleAddTechnician = async () => {
-        const { value: formValues } = await Swal.fire({
-            title: 'Add New Technician',
-            html:
-                '<input id="name" class="swal2-input" placeholder="Name">' +
-                '<input id="email" class="swal2-input" placeholder="Email">' +
-                '<input id="password" class="swal2-input" placeholder="Password" type="password">' +
-                '<input id="phone" class="swal2-input" placeholder="Phone">' +
-                '<input id="dob" class="swal2-input" type="date">' +
-                '<input id="profilePic" class="swal2-input" type="file" accept="image/*">',
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'Add',
-            preConfirm: () => {
-                const formData = new FormData();
-                formData.append('name', document.getElementById('name').value);
-                formData.append('email', document.getElementById('email').value);
-                formData.append('password', document.getElementById('password').value);
-                formData.append('phone', document.getElementById('phone').value);
-                formData.append('dob', document.getElementById('dob').value);
-                const file = document.getElementById('profilePic').files[0];
-                if (file) {
-                    formData.append('profilePic', file);
-                }
-                return formData;
-            }
-        });
-
-        if (formValues) {
-            try {
-                const errors = validateForm({
-                    name: formValues.get('name'),
-                    email: formValues.get('email'),
-                    password: formValues.get('password'),
-                    phone: formValues.get('phone'),
-                    dob: formValues.get('dob')
-                });
-
-                if (Object.keys(errors).length > 0) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Validation Error',
-                        text: Object.values(errors).join('\n')
-                    });
-                    return;
-                }
-
-                await axiosInstance.post('/tech/add', formValues, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-                toast.success('Technician added successfully');
-                fetchTechnicians();
-            } catch (error) {
-                console.error('Error adding technician:', error);
-                toast.error('Failed to add technician');
-            }
-        }
+    const handleUpdateTechnician = (technician) => {
+        setSelectedTechnician(technician);
+        setShowUpdateModal(true);
     };
 
-    const handleUpdateTechnician = async (technician) => {
-        const { value: formValues } = await Swal.fire({
-            title: 'Update Technician',
-            html:
-                `<input id="name" class="swal2-input" placeholder="Name" value="${technician.name}">` +
-                `<input id="email" class="swal2-input" placeholder="Email" value="${technician.email}">` +
-                `<input id="phone" class="swal2-input" placeholder="Phone" value="${technician.phone}">` +
-                `<input id="dob" class="swal2-input" type="date" value="${new Date(technician.dob).toISOString().split('T')[0]}">` +
-                '<input id="profilePic" class="swal2-input" type="file" accept="image/*">',
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'Update',
-            preConfirm: () => {
-                const formData = new FormData();
-                formData.append('name', document.getElementById('name').value);
-                formData.append('email', document.getElementById('email').value);
-                formData.append('phone', document.getElementById('phone').value);
-                formData.append('dob', document.getElementById('dob').value);
-                const file = document.getElementById('profilePic').files[0];
-                if (file) {
-                    formData.append('profilePic', file);
-                }
-                return formData;
-            }
-        });
-
-        if (formValues) {
-            try {
-                const errors = validateForm({
-                    name: formValues.get('name'),
-                    email: formValues.get('email'),
-                    phone: formValues.get('phone'),
-                    dob: formValues.get('dob')
-                });
-
-                if (Object.keys(errors).length > 0) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Validation Error',
-                        text: Object.values(errors).join('\n')
-                    });
-                    return;
-                }
-
-                await axiosInstance.put(`/tech/${technician._id}`, formValues, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-                toast.success('Technician updated successfully');
-                fetchTechnicians();
-            } catch (error) {
-                console.error('Error updating technician:', error);
-                toast.error('Failed to update technician');
-            }
-        }
-    };
-
-    const handleDeleteTechnician = async (technicianId) => {
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: 'This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'No, keep it'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await axiosInstance.delete(`/tech/${technicianId}`);
-                toast.success('Technician deleted successfully');
-                fetchTechnicians();
-            } catch (error) {
-                console.error('Error deleting technician:', error);
-                toast.error('Failed to delete technician');
-            }
-        }
+    const handleDeleteTechnician = (technician) => {
+        setSelectedTechnician(technician);
+        setShowDeleteModal(true);
     };
 
     const columns = React.useMemo(() => [
@@ -258,7 +102,7 @@ const TechniciansLayer = () => {
                     </button>
                     <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => handleDeleteTechnician(row.original._id)}
+                        onClick={() => handleDeleteTechnician(row.original)}
                     >
                         <Icon icon="mdi:delete" />
                     </button>
@@ -335,8 +179,28 @@ const TechniciansLayer = () => {
                     </div>
                 )}
             </div>
+
+            <AddTechnicianModal
+                show={showAddModal}
+                handleClose={() => setShowAddModal(false)}
+                fetchTechnicians={fetchTechnicians}
+            />
+
+            <UpdateTechnicianModal
+                show={showUpdateModal}
+                handleClose={() => setShowUpdateModal(false)}
+                technician={selectedTechnician}
+                fetchTechnicians={fetchTechnicians}
+            />
+
+            <DeleteTechnicianModal
+                show={showDeleteModal}
+                handleClose={() => setShowDeleteModal(false)}
+                technician={selectedTechnician}
+                fetchTechnicians={fetchTechnicians}
+            />
         </div>
     );
 };
 
-export default TechniciansLayer;
+export default TechniciansLayer; 
