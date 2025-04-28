@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Button } from 'react-bootstrap';
-import axiosInstance from "../../axiosConfig";
+import axiosInstance from "../../../axiosConfig";
 import { toast } from 'react-toastify';
 
 const DeleteTechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) => {

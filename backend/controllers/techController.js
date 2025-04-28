@@ -12,7 +12,7 @@ import helpers from "../utils/helpers.js";
 export const addTech = async (req, res) => {
     try {
         const { name, email, password, phone, dob } = req.body;
-        
+
         // validate required fields
         if (!name || !email || !password || !phone || !dob) {
             return res.status(400).json({ message: "Please fill all required fields" });
@@ -71,9 +71,9 @@ export const addTech = async (req, res) => {
 
         // Return the tech without password
         const { password: _, ...techWithoutPassword } = newTech.toObject();
-        return res.status(201).json({ 
-            message: "Tech added successfully", 
-            tech: techWithoutPassword 
+        return res.status(201).json({
+            message: "Tech added successfully",
+            tech: techWithoutPassword
         });
     } catch (error) {
         console.error('Error adding tech:', error);
@@ -99,7 +99,7 @@ export const getAllTechs = async (req, res) => {
 /**-----------------------------------------
  *  @desc Get a tech by ID
  * @route GET /api/tech/:id
- * @access Private
+ * @access Public
  * @role Super Admin, Admin, Tech
  ------------------------------------------*/
 export const getTechById = async (req, res) => {
@@ -108,7 +108,7 @@ export const getTechById = async (req, res) => {
         if (!tech) {
             return res.status(404).json({ message: "Tech not found" });
         }
-        return res.status(200).json( tech );
+        return res.status(200).json(tech);
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -117,7 +117,7 @@ export const getTechById = async (req, res) => {
 /**-----------------------------------------
  *  @desc Update a tech
  * @route PUT /api/tech/:id
- * @access Private
+ * @access Public
  * @role Super Admin, Admin, Tech
  ------------------------------------------*/
 export const updateTech = async (req, res) => {
@@ -151,20 +151,80 @@ export const updateTech = async (req, res) => {
             tech.dob = new Date(req.body.dob);
         }
 
+        let profilePictureUrl = tech.photo;
+
+        if (req.file) {
+            try {
+                profilePictureUrl = await uploadToCloudinary(req.file.path);
+                fs.unlinkSync(req.file.path);  // Clean up the file after uploading
+            } catch (error) {
+                return res.status(500).json({ message: "Failed to upload profile picture" });
+            }
+        }
+
+        // If a new profile picture URL exists, update it
+        if (profilePictureUrl !== tech.photo) {
+            tech.photo = profilePictureUrl;
+        }
+
         // Save the updated tech
         const updatedTech = await tech.save();
-        
+
         // Return the updated tech without the password
         const { password, ...techWithoutPassword } = updatedTech.toObject();
-        return res.status(200).json({ 
-            message: "Tech updated successfully", 
-            tech: techWithoutPassword 
+        return res.status(200).json({
+            message: "Tech updated successfully",
+            tech: techWithoutPassword
         });
     } catch (error) {
         console.error('Error updating tech:', error);
         return res.status(500).json({ message: error.message });
     }
 }
+
+/**-----------------------------------------
+ * @desc Update Tech Password
+ * @route PUT /api/tech/update-password/:id
+ * @access Public
+ * @role Super Admin, Admin, Tech
+ ------------------------------------------*/
+export const updateTechPassword = async (req, res) => {
+    const { id } = req.params;
+    const { newPassword, confirmPassword } = req.body;
+
+    // Check if both fields are provided
+    if (!newPassword || !confirmPassword) {
+        return res.status(400).json({ message: "Please provide both new password and confirm password" });
+    }
+
+    // Check if passwords match
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    // Validate password strength
+    if (!helpers.validatePassword(newPassword)) {
+        return res.status(400).json({
+            message: "Password must be at least 8 characters long, contain at least one uppercase letter, one number, and one special character"
+        });
+    }
+
+    try {
+        const tech = await Tech.findById(id);
+        if (!tech) {
+            return res.status(404).json({ message: "Technician not found" });
+        }
+
+        tech.password = newPassword; // hashing will happen automatically in pre-save
+
+        await tech.save();
+
+        return res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+        console.error('Password update error:', error);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
 
 /**-----------------------------------------
  * @desc Delete a tech

@@ -4,6 +4,7 @@ import {
     getAllAdmins,
     getAdmin,
     updateAdmin,
+    updateAdminPassword,
     deleteAdmin,
     signin
 } from '../controllers/adminController.js';
@@ -15,7 +16,8 @@ const router = express.Router();
 router.post('/add', verifyToken, authorizePosition('superadmin'), upload.single("profilePic"), addAdmin); // Add a new admin
 router.get('/', verifyToken, authorizePosition('superadmin'), getAllAdmins); // Get all admins
 router.get('/:id', verifyToken, authorizePosition('superadmin', 'admin'), getAdmin); // Get a single admin by ID
-router.put('/:id', verifyToken, authorizePosition('superadmin', 'admin'), upload.single("profilePic"),updateAdmin); // Update an admin by ID
+router.put('/:id', verifyToken, authorizePosition('superadmin', 'admin'), upload.single("profilePic"), updateAdmin); // Update an admin by ID
+router.put('/update-password/:id', verifyToken, authorizePosition('admin', 'siperadmin'), updateAdminPassword); // Update Admins password by ID
 router.delete('/:id', verifyToken, authorizePosition('superadmin'), deleteAdmin); // Delete an admin by ID
 router.post('/signin', signin); // Admin/Tech Signin
 

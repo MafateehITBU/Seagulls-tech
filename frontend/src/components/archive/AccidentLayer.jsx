@@ -6,15 +6,14 @@ import ReportModal from '../modals/ReportModal';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CrocaReportModal from '../modals/CrocaReportModal';
+import CrocaReportModal from '../modals/Accident/CrocaReportModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-25"
+        className="form-control w-30"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search tickets..."
-        style={{ marginBottom: '15px' }}
+        placeholder="Search Accident Tickets..."
     />
 );
 

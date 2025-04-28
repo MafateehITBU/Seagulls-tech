@@ -13,6 +13,8 @@ import ClosedMaintenancePage from "./pages/archive/ClosedMaintenancePage";
 import AssetsPage from "./pages/AssetsPage";
 import TechniciansPage from "./pages/TechniciansPage";
 import VendorPage from "./pages/VendorPage";
+import SparePartPage from "./pages/SaprePartPage";
+
 import AdminsPage from "./pages/AdminsPage";
 function App() {
   return (
@@ -118,6 +120,15 @@ function App() {
           element={
             <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
               <VendorPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/spare-parts"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
+              <SparePartPage />
             </ProtectedRoute>
           }
         />

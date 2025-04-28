@@ -9,11 +9,10 @@ import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-25"
+        className="form-control w-30"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search tickets..."
-        style={{ marginBottom: '15px' }}
+        placeholder="Search Cleaning Tickets..."
     />
 );
 

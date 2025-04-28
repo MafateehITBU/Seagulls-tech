@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-import axiosInstance from "../../axiosConfig";
+import axiosInstance from "../../../axiosConfig";
 import { toast } from 'react-toastify';
 
-const CreateAdminModal = ({ show, handleClose, fetchAdmins }) => {
+const AddTechnicianModal = ({ show, handleClose, fetchTechnicians }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [phone, setPhone] = useState('');
-    const [bio, setBio] = useState('');
+    const [dob, setDob] = useState('');
     const [profilePic, setProfilePic] = useState(null);
     const [errors, setErrors] = useState({});
 
     const validateForm = () => {
         const newErrors = {};
-        
+
         if (!name.trim()) {
             newErrors.name = 'Name is required';
         }
@@ -33,8 +33,12 @@ const CreateAdminModal = ({ show, handleClose, fetchAdmins }) => {
 
         if (!password) {
             newErrors.password = 'Password is required';
-        } else if (!/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password)) {
-            newErrors.password = 'Password must be at least 8 characters, contain one uppercase letter, one number, and one special character';
+        } else if (password.length < 6) {
+            newErrors.password = 'Password must be at least 6 characters';
+        }
+
+        if (!dob) {
+            newErrors.dob = 'Date of birth is required';
         }
 
         setErrors(newErrors);
@@ -46,14 +50,14 @@ const CreateAdminModal = ({ show, handleClose, fetchAdmins }) => {
         setEmail('');
         setPassword('');
         setPhone('');
-        setBio('');
+        setDob('');
         setProfilePic(null);
         setErrors({});
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
@@ -64,27 +68,31 @@ const CreateAdminModal = ({ show, handleClose, fetchAdmins }) => {
             formDataToSend.append('email', email);
             formDataToSend.append('password', password);
             formDataToSend.append('phone', phone);
-            formDataToSend.append('bio', bio);
+            formDataToSend.append('dob', dob);
             if (profilePic) {
                 formDataToSend.append('profilePic', profilePic);
             }
 
-            await axiosInstance.post('/admin/add', formDataToSend);
-            
-            toast.success('Admin added successfully');
-            fetchAdmins();
+            await axiosInstance.post('/tech/add', formDataToSend, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            toast.success('Technician added successfully');
+            fetchTechnicians();
             resetForm();
             handleClose();
         } catch (error) {
-            console.error('Error adding admin:', error);
-            toast.error(error.response?.data?.message || 'Failed to add admin');
+            console.error('Error adding technician:', error);
+            toast.error(error.response?.data?.message || 'Failed to add technician');
         }
     };
 
     return (
         <Modal show={show} onHide={handleClose}>
             <Modal.Header closeButton>
-                <Modal.Title className="h5">Add New Admin</Modal.Title>
+                <Modal.Title className="h5">Add New Technician</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form onSubmit={handleSubmit} className='d-flex flex-column'>
@@ -144,15 +152,17 @@ const CreateAdminModal = ({ show, handleClose, fetchAdmins }) => {
                         </Form.Control.Feedback>
                     </Form.Group>
 
-                    <Form.Group controlId="bio" className="mb-3">
-                        <Form.Label>Bio</Form.Label>
+                    <Form.Group controlId="dob" className="mb-3">
+                        <Form.Label>Date of Birth</Form.Label>
                         <Form.Control
-                            as="textarea"
-                            rows={3}
-                            value={bio}
-                            onChange={(e) => setBio(e.target.value)}
-                            placeholder="Enter bio"
+                            type="date"
+                            value={dob}
+                            onChange={(e) => setDob(e.target.value)}
+                            isInvalid={!!errors.dob}
                         />
+                        <Form.Control.Feedback type="invalid">
+                            {errors.dob}
+                        </Form.Control.Feedback>
                     </Form.Group>
 
                     <Form.Group controlId="profilePic" className="mb-3">
@@ -165,7 +175,7 @@ const CreateAdminModal = ({ show, handleClose, fetchAdmins }) => {
                     </Form.Group>
 
                     <Button variant="primary" type="submit" className='mt-4 align-self-center' style={{ width: "150px" }}>
-                        Add Admin
+                        Add Technician
                     </Button>
                 </Form>
             </Modal.Body>
@@ -173,4 +183,4 @@ const CreateAdminModal = ({ show, handleClose, fetchAdmins }) => {
     );
 };
 
-export default CreateAdminModal; 
+export default AddTechnicianModal; 

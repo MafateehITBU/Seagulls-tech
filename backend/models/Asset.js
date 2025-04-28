@@ -75,6 +75,9 @@ const assetSchema = new mongoose.Schema({
             ref: 'Report',
         }
     ],
+    qrCode: {
+        type: String, // this will store the Data URL (base64 image)
+    },
 }, { timestamps: true });
 
 

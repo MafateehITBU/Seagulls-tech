@@ -4,6 +4,7 @@ import {
     getTechById,
     addTech,
     updateTech,
+    updateTechPassword,
     deleteTech
 } from '../controllers/techController.js';
 import upload from '../middleware/photoUpload.js';
@@ -14,7 +15,8 @@ const router = express.Router();
 router.post('/add', verifyToken, authorizePosition('superadmin', 'admin'), upload.single("profilePic"), addTech); // Add a new tech
 router.get('/', verifyToken, authorizePosition('superadmin', 'admin'), getAllTechs); // Get all techs
 router.get('/:id',verifyToken, getTechById); // Get a single tech by ID
-router.put('/:id',verifyToken, updateTech); // Update a tech by ID
+router.put('/:id',verifyToken, upload.single("profilePic"), updateTech); // Update a tech by ID
+router.put('/update-password/:id', verifyToken, updateTechPassword); // Update Tech password by ID
 router.delete('/:id',verifyToken, authorizePosition('superadmin', 'admin'), deleteTech); // Delete a tech by ID
 
 export default router;

@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useTable, useGlobalFilter, useSortBy } from 'react-table';
 import { Icon } from '@iconify/react';
-import Swal from 'sweetalert2';
 import axiosInstance from "../axiosConfig";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CreateAssetModal from './modals/CreateAssetModal';
-import EditAssetModal from './modals/EditAssetModal';
+import CreateAssetModal from './modals/Asset/CreateAssetModal';
+import EditAssetModal from './modals/Asset/EditAssetModal';
+import DeleteModal from './modals/DeleteModal';
+
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-25"
+        className="form-control w-30"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search assets..."
-        style={{ marginBottom: '15px' }}
+        placeholder="Search Assets..."
     />
 );
 
@@ -24,6 +24,9 @@ const AssetsLayer = () => {
     const [selectedAsset, setSelectedAsset] = useState(null);
     const [editModalShow, setEditModalShow] = useState(false);
     const [selectedAssetEdit, setSelectedAssetEdit] = useState(null); // for Edit Modal
+    const [selectedAssetDelete, setSelectedAssetDelete] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
 
     useEffect(() => {
         fetchData();
@@ -38,24 +41,9 @@ const AssetsLayer = () => {
         }
     };
 
-    const handleDelete = async (assetId) => {
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: 'This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await axiosInstance.delete(`/asset/${assetId}`);
-                setAssets(prev => prev.filter(a => a._id !== assetId));
-                toast.success('Asset deleted successfully!', { position: "top-right" });
-            } catch (error) {
-                toast.error('Failed to delete the asset.', { position: "top-right" });
-            }
-        }
+    const handleDelete = async (asset) => {
+        setSelectedAssetDelete(asset);
+        setShowDeleteModal(true);
     };
 
     const closeModal = () => setSelectedAsset(null);
@@ -152,7 +140,7 @@ const AssetsLayer = () => {
                     </button>
                     <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(row.original._id)}
+                        onClick={() => handleDelete(row.original)}
                     >
                         <Icon icon="mdi:delete" />
                     </button>
@@ -271,6 +259,18 @@ const AssetsLayer = () => {
                 fetchData={fetchData}
                 selectedAsset={selectedAssetEdit}
             />)}
+
+            {/* Delete Modal */}
+            {selectedAssetDelete && (
+                <DeleteModal
+                    show={showDeleteModal}
+                    handleClose={() => setShowDeleteModal(false)}
+                    id={selectedAssetDelete._id}
+                    fetchData={fetchData}
+                    title="Asset"
+                    route="asset"
+                />
+            )}
         </div>
     );
 };

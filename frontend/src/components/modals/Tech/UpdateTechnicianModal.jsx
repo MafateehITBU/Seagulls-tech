@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-import axiosInstance from "../../axiosConfig";
+import axiosInstance from "../../../axiosConfig";
 import { toast } from 'react-toastify';
 
 const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) => {
@@ -23,7 +23,7 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
 
     const validateForm = () => {
         const newErrors = {};
-        
+
         if (!name.trim()) {
             newErrors.name = 'Name is required';
         }
@@ -50,7 +50,7 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
@@ -68,7 +68,7 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             toast.success('Technician updated successfully');
             fetchTechnicians();
             handleClose();

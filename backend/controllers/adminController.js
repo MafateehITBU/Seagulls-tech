@@ -113,32 +113,22 @@ export const getAdmin = async (req, res) => {
  ------------------------------------------*/
 export const updateAdmin = async (req, res) => {
     const { id } = req.params;
-    const { name, email, password, phone, bio, position } = req.body;
+    const { name, email, phone, bio, position } = req.body;
 
-    // check if the admin exists
     const admin = await Admin.findById(id);
     if (!admin) {
         return res.status(404).json({ message: "Admin not found" });
     }
 
-    // update only the fields that are provided
+    // Update only the fields that are provided
     if (name) admin.name = name;
     if (email) {
-        // validate email format
         if (!helpers.validateEmail(email)) {
             return res.status(400).json({ message: "Invalid email format" });
         }
         admin.email = email.toLowerCase();
     }
-    if (password) {
-        // validate password format
-        if (!helpers.validatePassword(password)) {
-            return res.status(400).json({ message: "Invalid password format" });
-        }
-        admin.password = password;
-    }
     if (phone) {
-        // validate phone format
         if (!helpers.validatePhone(phone)) {
             return res.status(400).json({ message: "Invalid phone number format" });
         }
@@ -148,24 +138,69 @@ export const updateAdmin = async (req, res) => {
     if (position) admin.position = position;
 
     try {
-        // Check if a file is uploaded
-        let profilePictureUrl = null;
+        let profilePictureUrl = admin.photo;
+
         if (req.file) {
             try {
                 profilePictureUrl = await uploadToCloudinary(req.file.path);
-                // Delete the local file after uploading
-                fs.unlinkSync(req.file.path);
+                fs.unlinkSync(req.file.path);  // Clean up the file after uploading
             } catch (error) {
                 return res.status(500).json({ message: "Failed to upload profile picture" });
             }
         }
 
-        if (profilePictureUrl) admin.photo = profilePictureUrl;
+        // If a new profile picture URL exists, update it
+        if (profilePictureUrl !== admin.photo) {
+            admin.photo = profilePictureUrl;
+        }
 
         await admin.save();
         return res.status(200).json({ message: "Admin updated successfully", admin });
     } catch (error) {
         return res.status(500).json({ message: error.message });
+    }
+};
+
+/**-----------------------------------------
+ * @desc Update Admin Password
+ * @route PUT /api/admin/update-password/:id
+ * @access Private
+ ------------------------------------------*/
+export const updateAdminPassword = async (req, res) => {
+    const { id } = req.params;
+    const { newPassword, confirmPassword } = req.body;
+
+    // Check if both fields are provided
+    if (!newPassword || !confirmPassword) {
+        return res.status(400).json({ message: "Please provide both new password and confirm password" });
+    }
+
+    // Check if passwords match
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    // Validate password strength
+    if (!helpers.validatePassword(newPassword)) {
+        return res.status(400).json({
+            message: "Password must be at least 8 characters long, contain at least one uppercase letter, one number, and one special character"
+        });
+    }
+
+    try {
+        const admin = await Admin.findById(id);
+        if (!admin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        admin.password = newPassword; // hashing will happen automatically in pre-save
+
+        await admin.save();
+
+        return res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+        console.error('Password update error:', error);
+        return res.status(500).json({ message: "Server error" });
     }
 };
 
@@ -244,8 +279,6 @@ export const signin = async (req, res) => {
         res.status(200).json({
             message: 'Login successful',
             token,
-            id: user._id,
-            position: position
         });
     } catch (err) {
         console.error('Login error:', err);

@@ -5,9 +5,9 @@ import axiosInstance from "../axiosConfig";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CreateAdminModal from './modals/CreateAdminModal';
-import EditAdminModal from './modals/EditAdminModal';
-import DeleteAdminModal from './modals/DeleteAdminModal';
+import CreateAdminModal from './modals/Admin/CreateAdminModal';
+import EditAdminModal from './modals/Admin/EditAdminModal';
+import DeleteAdminModal from './modals/Admin/DeleteAdminModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
@@ -61,10 +61,10 @@ const AdminsLayer = () => {
             Header: 'Photo',
             accessor: 'photo',
             Cell: ({ value }) => (
-                <img 
-                    src={value} 
-                    alt="Profile" 
-                    style={{ width: '40px', height: '40px', borderRadius: '50%' }} 
+                <img
+                    src={value}
+                    alt="Profile"
+                    style={{ width: '40px', height: '40px', borderRadius: '50%' }}
                     onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = 'https://ui-avatars.com/api/?name=Admin&size=128';
@@ -188,20 +188,20 @@ const AdminsLayer = () => {
                 )}
             </div>
 
-            <CreateAdminModal 
+            <CreateAdminModal
                 show={showCreateModal}
                 handleClose={() => setShowCreateModal(false)}
                 fetchAdmins={fetchAdmins}
             />
 
-            <EditAdminModal 
+            <EditAdminModal
                 show={showEditModal}
                 handleClose={() => setShowEditModal(false)}
                 fetchAdmins={fetchAdmins}
                 selectedAdmin={selectedAdmin}
             />
 
-            <DeleteAdminModal 
+            <DeleteAdminModal
                 show={showDeleteModal}
                 handleClose={() => setShowDeleteModal(false)}
                 admin={selectedAdmin}

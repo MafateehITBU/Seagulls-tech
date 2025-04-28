@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form } from 'react-bootstrap';
-import axiosInstance from '../../axiosConfig';
+import axiosInstance from '../../../axiosConfig';
 import { toast } from 'react-toastify';
 import { Icon } from '@iconify/react';
 
@@ -42,7 +42,7 @@ const TechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) =>
 
     const validateForm = () => {
         const newErrors = {};
-        
+
         if (!formData.name.trim()) {
             newErrors.name = 'Name is required';
         }
@@ -75,7 +75,7 @@ const TechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) =>
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-        
+
         if (name === 'profilePic' && files && files[0]) {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -92,7 +92,7 @@ const TechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) =>
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
@@ -120,7 +120,7 @@ const TechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) =>
                 });
                 toast.success('Technician added successfully');
             }
-            
+
             handleClose();
             fetchTechnicians();
         } catch (error) {
@@ -140,19 +140,19 @@ const TechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) =>
                 <div className="row">
                     <div className="col-md-4 text-center mb-4 mb-md-0">
                         <div className="position-relative d-inline-block">
-                            <div 
-                                className="rounded-circle overflow-hidden" 
-                                style={{ 
-                                    width: '150px', 
-                                    height: '150px', 
+                            <div
+                                className="rounded-circle overflow-hidden"
+                                style={{
+                                    width: '150px',
+                                    height: '150px',
                                     border: '3px solid #e9ecef',
                                     background: '#f8f9fa'
                                 }}
                             >
                                 {previewImage ? (
-                                    <img 
-                                        src={previewImage} 
-                                        alt="Profile Preview" 
+                                    <img
+                                        src={previewImage}
+                                        alt="Profile Preview"
                                         className="w-100 h-100 object-fit-cover"
                                     />
                                 ) : (
@@ -161,7 +161,7 @@ const TechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) =>
                                     </div>
                                 )}
                             </div>
-                            <label 
+                            <label
                                 className="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2 cursor-pointer"
                                 style={{ transform: 'translate(25%, 25%)' }}
                             >
@@ -290,15 +290,15 @@ const TechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) =>
                 </div>
             </Modal.Body>
             <Modal.Footer className="border-0 pt-0">
-                <button 
-                    className="btn btn-light" 
+                <button
+                    className="btn btn-light"
                     onClick={handleClose}
                     style={{ minWidth: '100px' }}
                 >
                     Cancel
                 </button>
-                <button 
-                    className="btn btn-primary" 
+                <button
+                    className="btn btn-primary"
                     onClick={handleSubmit}
                     style={{ minWidth: '100px' }}
                 >

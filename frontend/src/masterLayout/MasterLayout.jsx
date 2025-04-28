@@ -139,7 +139,7 @@ const MasterLayout = ({ children }) => {
                 className={(navData) => (navData.isActive ? "active-page" : "")}
               >
                 <Icon
-                  icon='solar:home-smile-angle-outline'
+                  icon='line-md:home-simple-twotone'
                   className='menu-icon'
                 />
                 <span>Dashboard</span>
@@ -191,7 +191,7 @@ const MasterLayout = ({ children }) => {
             {/* Archive */}
             <li className='dropdown mt-2'>
               <Link to='#'>
-                <Icon icon='hugeicons:refresh' className='menu-icon' />
+                <Icon icon='line-md:folder-twotone' className='menu-icon' />
                 <span>Archive</span>
               </Link>
               <ul className='sidebar-submenu'>
@@ -239,7 +239,7 @@ const MasterLayout = ({ children }) => {
                 className={(navData) => (navData.isActive ? "active-page" : "")}
               >
                 <Icon
-                  icon='solar:home-smile-angle-outline'
+                  icon='line-md:clipboard-list-twotone'
                   className='menu-icon'
                 />
                 <span>Assets</span>
@@ -253,10 +253,24 @@ const MasterLayout = ({ children }) => {
                 className={(navData) => (navData.isActive ? "active-page" : "")}
               >
                 <Icon
-                  icon='solar:home-smile-angle-outline'
+                  icon='line-md:home-md-twotone'
                   className='menu-icon'
                 />
                 <span>Vendors</span>
+              </NavLink>
+            </li>
+
+            {/* Spare Parts */}
+            <li>
+              <NavLink
+                to='/admin/spare-parts'
+                className={(navData) => (navData.isActive ? "active-page" : "")}
+              >
+                <Icon
+                  icon='line-md:cog-loop'
+                  className='menu-icon'
+                />
+                <span>Spare Parts</span>
               </NavLink>
             </li>
 

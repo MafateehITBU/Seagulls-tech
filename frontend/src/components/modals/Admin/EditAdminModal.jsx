@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-import axiosInstance from '../../axiosConfig';
+import axiosInstance from '../../../axiosConfig';
 import { toast } from 'react-toastify';
 import { Icon } from '@iconify/react';
 
@@ -52,7 +52,7 @@ const EditAdminModal = ({ show, handleClose, fetchAdmins, selectedAdmin }) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             setSelectedFile(file);
-            
+
             // Create preview URL
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -118,27 +118,27 @@ const EditAdminModal = ({ show, handleClose, fetchAdmins, selectedAdmin }) => {
                 <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                     <div className="text-center mb-4">
                         <div className="position-relative d-inline-block">
-                            <div 
-                                className="rounded-circle overflow-hidden" 
-                                style={{ 
-                                    width: '150px', 
-                                    height: '150px', 
+                            <div
+                                className="rounded-circle overflow-hidden"
+                                style={{
+                                    width: '150px',
+                                    height: '150px',
                                     border: '3px solid #e9ecef',
                                     background: '#f8f9fa'
                                 }}
                             >
-                                <img 
-                                    src={imagePreview} 
-                                    alt="Profile Preview" 
+                                <img
+                                    src={imagePreview}
+                                    alt="Profile Preview"
                                     className="w-100 h-100 object-fit-cover"
                                     onError={(e) => {
                                         e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'Admin')}&size=128`;
                                     }}
                                 />
                             </div>
-                            <label 
+                            <label
                                 className="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2 cursor-pointer"
-                                style={{ 
+                                style={{
                                     transform: 'translate(25%, 25%)',
                                     border: '2px solid white',
                                     boxShadow: '0 0 5px rgba(0,0,0,0.3)'

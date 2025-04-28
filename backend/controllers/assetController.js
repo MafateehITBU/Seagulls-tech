@@ -2,6 +2,7 @@ import Asset from "../models/Asset.js";
 import helpers from "../utils/helpers.js";
 import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import QRCode from 'qrcode';
 
 /**------------------------------------------
  * @desc Create a new asset
@@ -106,6 +107,23 @@ export const createAsset = async (req, res) => {
         });
 
         await newAsset.save();
+
+        // === QR Code Generation ===
+        const assetDataForQR = {
+            assetNo: newAsset.assetNo,
+            assetName: newAsset.assetName,
+            assetType: newAsset.assetType,
+            assetSubType: newAsset.assetSubType,
+            location: newAsset.location,
+            installationDate: newAsset.installationDate,
+        };
+
+        const qrDataString = JSON.stringify(assetDataForQR);
+        const qrCodeImageUrl = await QRCode.toDataURL(qrDataString);
+
+        newAsset.qrCode = qrCodeImageUrl;
+        await newAsset.save();
+        
         res.status(201).json({ message: "Asset Created Successfully!", newAsset });
     } catch (err) {
         console.error(err);

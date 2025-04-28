@@ -5,26 +5,27 @@ import axiosInstance from "../axiosConfig";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CreateVendorModal from './modals/Vendor/CreateVendorModal.jsx';
-import EditVendorModal from './modals/Vendor/EditVendorModal.jsx';
-import DeleteModal from './modals/DeleteModal.jsx';
+import CreateSparePartModal from './modals/SparePart/CreateSparePartModal.jsx';
+import EditSparePartModal from './modals/SparePart/EditSparePartModal.jsx';
+import DeleteModal from './modals/DeleteModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-30"
+        className="form-control w-25"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search Vendor..."
+        placeholder="Search spare parts..."
+        style={{ marginBottom: '15px' }}
     />
 );
 
-const VendorLayer = () => {
-    const [vendors, setVendors] = useState([]);
+const SparePartLayer = () => {
+    const [spareParts, setSpareParts] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [selectedVendor, setSelectedVendor] = useState(null);
+    const [selectedSparePart, setSelectedSparePart] = useState(null);
     const [editModalShow, setEditModalShow] = useState(false);
-    const [selectedVendorEdit, setSelectedVendorEdit] = useState(null); // for Edit Modal
-    const [selectedVendorDelete, setSelectedVendorDelete] = useState(null);
+    const [selectedSparePartEdit, setSelectedSparePartEdit] = useState(null); // for Edit Modal
+    const [selectedSparePartDelete, setSelectedSparePartDelete] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
@@ -33,45 +34,77 @@ const VendorLayer = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axiosInstance.get('/vendor');
-            setVendors(response.data.vendors);
+            const response = await axiosInstance.get('/sparepart');
+            setSpareParts(response.data);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
 
-    const handleDelete = async (vendor) => {
-        setSelectedVendorDelete(vendor);
+    const handleDelete = async (sparePart) => {
+        setSelectedSparePartDelete(sparePart);
         setShowDeleteModal(true);
     };
 
-    const closeModal = () => setSelectedVendor(null);
+    const closeModal = () => setSelectedSparePart(null);
 
     const columns = React.useMemo(() => [
         {
-            Header: '#',
-            accessor: (_row, i) => i + 1,
+            Header: 'Part No',
+            accessor: row => row.partNo || '#',
         },
         {
             Header: 'Name',
-            accessor: row => row.name || '-',
+            accessor: row => row.partName || '-',
         },
         {
-            Header: 'Email',
-            accessor: row => row.email || '-',
+            Header: 'Vendor',
+            accessor: row => row.vendorName,
         },
         {
-            Header: 'Phone',
-            accessor: row => row.phone || '-',
+            Header: 'Barcode',
+            accessor: row => row.partBarcode || '-',
         },
         {
-            Header: 'Spare Parts',
+            Header: 'Quantity',
+            accessor: row => row.quantity || '-',
+        },
+        {
+            Header: 'Min. Stock',
+            accessor: row => row.minStock,
+        },
+        {
+            Header: 'Max. Stock',
+            accessor: row => row.maxStock,
+        },
+        {
+            Header: 'Expiry Date',
+            accessor: row => new Date(row.expiryDate).toLocaleDateString(),
+        },
+        {
+            Header: 'Lead Time',
+            accessor: row => row.leadTime,
+        },
+        {
+            Header: 'Storage Type',
+            accessor: row => row.storageType,
+            Cell: ({ row }) => {
+                const status = row.original.storageType;
+                return status !== 'cold' ? (
+                    <span className='badge bg-success'>Regular</span>
+                ) : (
+                    <span className='badge bg-primary'>Cold</span>
+                )
+            },
+        },
+        {
+            Header: 'Photo',
             Cell: ({ row }) => (
                 <button
-                    className="btn btn-sm btn-primary"
-                    onClick={() => setSelectedVendor(row.original)}
+                    className="btn btn-sm btn-warning"
+                    onClick={() => setSelectedSparePart(row.original)}
                 >
-                    see parts
+                    view
                 </button>
             ),
         },
@@ -81,7 +114,7 @@ const VendorLayer = () => {
                 <div className="d-flex justify-content-center gap-2">
                     <button
                         className="btn btn-sm btn-primary"
-                        onClick={() => { setSelectedVendorEdit(row.original); setEditModalShow(true); }}
+                        onClick={() => { setSelectedSparePartEdit(row.original); setEditModalShow(true); }}
                     >
                         <Icon icon="mdi:pencil" />
                     </button>
@@ -104,24 +137,24 @@ const VendorLayer = () => {
         prepareRow,
         setGlobalFilter,
         state,
-    } = useTable({ columns, data: vendors }, useGlobalFilter, useSortBy);
+    } = useTable({ columns, data: spareParts }, useGlobalFilter, useSortBy);
 
     return (
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className='card-title mb-0'> Vendors</h5>
+                <h5 className='card-title mb-0'> Spare Parts</h5>
                 <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
                 <button
                     className="btn btn-success ml-3"
                     onClick={() => setShowModal(true)} // Show modal on button click
                 >
-                    + Create New Vendor
+                    + Create New Spare Part
                 </button>
             </div>
             <div className="card-body">
-                {vendors.length === 0 ? (
-                    <div className="text-center">No vendors found</div>
+                {spareParts.length === 0 ? (
+                    <div className="text-center">No spareParts found</div>
                 ) : (
                     <div style={{ overflowX: 'auto' }}>
                         <table className="table bordered-table mb-0" {...getTableProps()}>
@@ -161,39 +194,25 @@ const VendorLayer = () => {
                 )}
             </div>
 
-            {/* Modal for Spare Parts Provided by the vendor */}
-            {selectedVendor && (
+            {/* Modal for Photo*/}
+            {selectedSparePart && (
                 <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog" role="document">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h6 className="modal-title">Spare Parts Provided by {selectedVendor.name}</h6>
+                                <h5 className="modal-title">Spare Part Photo</h5>
                                 <button type="button" className="btn-close" onClick={closeModal}></button>
                             </div>
-                            <div className="modal-body">
-                                {selectedVendor.spareParts && selectedVendor.spareParts.length > 0 ? (
-                                    <div className="table-responsive">
-                                        <table className="table table-bordered text-center">
-                                            <thead className="table-light">
-                                                <tr>
-                                                    <th className='text-center'>Part No</th>
-                                                    <th className='text-center'>Part Name</th>
-                                                    <th className='text-center'>Quantity</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {selectedVendor.spareParts.map((part) => (
-                                                    <tr key={part._id}>
-                                                        <td>{part.partNo || '-'}</td>
-                                                        <td>{part.partName || '-'}</td>
-                                                        <td>{part.quantity ?? '-'}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                            <div className="modal-body d-flex flex-column">
+                                {selectedSparePart.photo ? (
+                                    <img
+                                        src={selectedSparePart.photo}
+                                        alt="Asset"
+                                        style={{ width: '400px', height: '50vh', borderRadius: '8px' }}
+                                        className='align-self-center'
+                                    />
                                 ) : (
-                                    <p className="text-center">No spare parts available for this vendor.</p>
+                                    <div>No photo available.</div>
                                 )}
                             </div>
                             <div className="modal-footer">
@@ -204,34 +223,35 @@ const VendorLayer = () => {
                 </div>
             )}
 
-            {/* Create New Asset Modal */}
-            <CreateVendorModal
+            {/* Create New Spare Part Modal */}
+            <CreateSparePartModal
                 show={showModal}
                 handleClose={() => setShowModal(false)} // Close the modal
                 fetchData={fetchData}
             />
 
-            {/* Edit Asset Modal */}
-            {selectedVendorEdit && (<EditVendorModal
+            {/* Edit Spare Part Modal */}
+            {selectedSparePartEdit && (<EditSparePartModal
                 show={editModalShow}
                 handleClose={() => setEditModalShow(false)}
                 fetchData={fetchData}
-                selectedVendor={selectedVendorEdit}
+                selectedSparePart={selectedSparePartEdit}
             />)}
 
             {/* Delete Modal */}
-            {selectedVendorDelete && (
+            {selectedSparePartDelete && (
                 <DeleteModal
                     show={showDeleteModal}
                     handleClose={() => setShowDeleteModal(false)}
-                    id={selectedVendorDelete._id}
+                    id={selectedSparePartDelete._id}
                     fetchData={fetchData}
-                    title="Vendor"
-                    route="vendor"
+                    title="Spare Part"
+                    route="sparepart"
                 />
             )}
+
         </div>
     );
 };
 
-export default VendorLayer;
+export default SparePartLayer;

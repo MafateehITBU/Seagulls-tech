@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useTable, useGlobalFilter, useSortBy } from 'react-table';
 import { Icon } from '@iconify/react';
-import Swal from 'sweetalert2';
 import axiosInstance from "../../axiosConfig";
 import ReportModal from '../modals/ReportModal';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CreateTicketModal from '../modals/CreateMaintTicket';
+import CreateTicketModal from '../modals/Maintenance/CreateMaintTicket';
+import DeleteModal from '../modals/DeleteModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-25"
+        className="form-control w-30"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search tickets..."
-        style={{ marginBottom: '15px' }}
+        placeholder="Search Maintenance Tickets..."
     />
 );
 
@@ -23,6 +22,8 @@ const MaintenanceLayer = () => {
     const [tickets, setTickets] = useState([]);
     const [selectedReport, setSelectedReport] = useState(null);
     const [showModal, setShowModal] = useState(false); // State to manage modal visibility
+    const [selectedTicketDelete, setSelectedTicketDelete] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -37,24 +38,9 @@ const MaintenanceLayer = () => {
         }
     };
 
-    const handleDelete = async (maintId) => {
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: 'This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it!',
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await axiosInstance.delete(`/maintenance/${maintId}`);
-                setTickets(prev => prev.filter(t => t._id !== maintId));
-                toast.success('Ticket deleted successfully!', { position: "top-right" });
-            } catch (error) {
-                toast.error('Failed to delete the ticket.', { position: "top-right" });
-            }
-        }
+    const handleDelete = async (maint) => {
+        setSelectedTicketDelete(maint);
+        setShowDeleteModal(true);
     };
 
     const handleCloseStatus = async (ticketId) => {
@@ -171,7 +157,7 @@ const MaintenanceLayer = () => {
             Cell: ({ row }) => (
                 <button
                     className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(row.original._id)}
+                    onClick={() => handleDelete(row.original)}
                 >
                     <Icon icon="mdi:delete" />
                 </button>
@@ -261,6 +247,18 @@ const MaintenanceLayer = () => {
                 fetchData={fetchData} // Pass fetchData to refresh the ticket list after creating a new ticket
                 type="maintenance"
             />
+
+            {/* Delete Modal */}
+            {selectedTicketDelete && (
+                <DeleteModal
+                    show={showDeleteModal}
+                    handleClose={() => setShowDeleteModal(false)}
+                    id={selectedTicketDelete._id}
+                    fetchData={fetchData}
+                    title="Maintenance Ticket"
+                    route="maintenance"
+                />
+            )}
         </div>
     );
 };
