@@ -14,6 +14,7 @@ import AssetsPage from "./pages/AssetsPage";
 import TechniciansPage from "./pages/TechniciansPage";
 import VendorPage from "./pages/VendorPage";
 import SparePartPage from "./pages/SaprePartPage";
+import AssetDetailsPage from "./pages/AssetDetailsPage";
 
 import AdminsPage from "./pages/AdminsPage";
 function App() {
@@ -140,6 +141,15 @@ function App() {
             <ProtectedRoute allowedPositions={['tech']}>
               {/* <TechDashboard /> */}
             </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/asset-details/:id"
+          element={
+            
+              <AssetDetailsPage />
+            
           }
         />
 

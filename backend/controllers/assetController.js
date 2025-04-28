@@ -11,79 +11,61 @@ import QRCode from 'qrcode';
  * @role Admin, Super Admin
  -------------------------------------------*/
 export const createAsset = async (req, res) => {
-    let {
-        assetNo,
-        assetName,
-        assetType,
-        assetSubType,
-        assetStatus,
-        location,
-        coordinates,
-        installationDate,
-        quantity = 1,
-        cleaningIntervalInDays,
-        maintIntervalInDays,
-        maintenanceReports = []
-    } = req.body;
+    try {
+        let {
+            assetNo,
+            assetName,
+            assetType,
+            assetSubType,
+            assetStatus = 'Active',
+            location,
+            coordinates,
+            installationDate,
+            quantity = 1,
+            cleaningIntervalInDays,
+            maintIntervalInDays,
+            maintenanceReports = []
+        } = req.body;
 
-    // Validate required fields
-    if (!assetNo || !assetName || !assetType || !assetSubType || !location || !coordinates || !installationDate || !cleaningIntervalInDays || !maintIntervalInDays) {
-        return res.status(400).json({ message: "Please fill all required fields" });
-    }
+        if (!assetNo || !assetName || !assetType || !assetSubType || !location || !coordinates || !installationDate || !cleaningIntervalInDays || !maintIntervalInDays) {
+            return res.status(400).json({ message: "Please fill all required fields" });
+        }
 
-    // Default assetStatus
-    if (!assetStatus) {
-        assetStatus = 'Active';
-    }
+        if (!helpers.validateCoordinates(coordinates)) {
+            return res.status(400).json({ message: "Invalid coordinates: must be numbers within valid range" });
+        }
 
-    // Validate coordinates
-    if (!helpers.validateCoordinates(coordinates)) {
-        return res.status(400).json({ message: "Invalid coordinates: must be numbers within valid range" });
-    }
+        if (cleaningIntervalInDays < 1 || maintIntervalInDays < 1) {
+            return res.status(400).json({ message: "Interval in days must be greater than 0" });
+        }
 
-    // Validate interval
-    if (cleaningIntervalInDays < 1 || maintIntervalInDays < 1) {
-        return res.status(400).json({ message: "Interval in days must be greater than 0" });
-    }
+        if (!helpers.validateInstallationDate(installationDate)) {
+            return res.status(400).json({ message: "Invalid installation date" });
+        }
+        const installationDateObj = new Date(installationDate);
 
-    // Validate installation date
-    if (!helpers.validateInstallationDate(installationDate)) {
-        return res.status(400).json({ message: "Invalid installation date" });
-    }
-    const installationDateObj = new Date(installationDate);
+        if (!helpers.validateQuantity(quantity)) {
+            return res.status(400).json({ message: "Quantity must be greater than 0" });
+        }
 
-    // Validate quantity
-    if (!helpers.validateQuantity(quantity)) {
-        return res.status(400).json({ message: "Quantity must be greater than 0" });
-    }
+        if (!helpers.validateAssetStatus(assetStatus)) {
+            return res.status(400).json({ message: "Invalid asset status" });
+        }
 
-    // Validate asset status
-    if (!helpers.validateAssetStatus(assetStatus)) {
-        return res.status(400).json({ message: "Invalid asset status" });
-    }
+        const existingAsset = await Asset.findOne({ assetNo });
+        if (existingAsset) {
+            return res.status(400).json({ message: "Asset with this number already exists" });
+        }
 
-    // Handle photo upload
-    let photo = null;
-    if (req.file) {
-        try {
+        let photo = null;
+        if (req.file) {
             photo = await uploadToCloudinary(req.file.path);
             fs.unlinkSync(req.file.path);
-        } catch (error) {
-            return res.status(500).json({ message: "Failed to upload asset photo" });
         }
-    }
 
-    // Calculate next cleaning and maintenance next dates based on the installationDate
-    const nextCleaningDate = new Date(installationDateObj.getTime() + cleaningIntervalInDays * 24 * 60 * 60 * 1000);
-    const nextMaintenanceDate = new Date(installationDateObj.getTime() + maintIntervalInDays * 24 * 60 * 60 * 1000);
+        const nextCleaningDate = new Date(installationDateObj.getTime() + cleaningIntervalInDays * 24 * 60 * 60 * 1000);
+        const nextMaintenanceDate = new Date(installationDateObj.getTime() + maintIntervalInDays * 24 * 60 * 60 * 1000);
 
-    // Check for duplicate assetNo
-    const existingAsset = await Asset.findOne({ assetNo });
-    if (existingAsset) {
-        return res.status(400).json({ message: "Asset with this number already exists" });
-    }
-
-    try {
         const newAsset = new Asset({
             assetNo,
             assetName,
@@ -108,26 +90,17 @@ export const createAsset = async (req, res) => {
 
         await newAsset.save();
 
-        // === QR Code Generation ===
-        const assetDataForQR = {
-            assetNo: newAsset.assetNo,
-            assetName: newAsset.assetName,
-            assetType: newAsset.assetType,
-            assetSubType: newAsset.assetSubType,
-            location: newAsset.location,
-            installationDate: newAsset.installationDate,
-        };
-
-        const qrDataString = JSON.stringify(assetDataForQR);
-        const qrCodeImageUrl = await QRCode.toDataURL(qrDataString);
+        const assetPageUrl = `http://localhost:3000/asset-details/${newAsset._id}`; // Change url later
+        const qrCodeImageUrl = await QRCode.toDataURL(assetPageUrl);
 
         newAsset.qrCode = qrCodeImageUrl;
         await newAsset.save();
-        
+
         res.status(201).json({ message: "Asset Created Successfully!", newAsset });
+
     } catch (err) {
         console.error(err);
-        res.status(400).json({ message: err.message });
+        res.status(500).json({ message: err.message });
     }
 };
 

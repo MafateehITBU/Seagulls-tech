@@ -8,6 +8,7 @@ import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
 import CreateAssetModal from './modals/Asset/CreateAssetModal';
 import EditAssetModal from './modals/Asset/EditAssetModal';
 import DeleteModal from './modals/DeleteModal';
+import { useNavigate } from 'react-router-dom';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
@@ -22,11 +23,13 @@ const AssetsLayer = () => {
     const [assets, setAssets] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState(null);
+    const [showQRModal, setShowQRModal] = useState(false); // QR modal state
+    const [qrCode, setQRCode] = useState(null); // Store selected QR code
+    const [selectedAssetEdit, setSelectedAssetEdit] = useState(null);
     const [editModalShow, setEditModalShow] = useState(false);
-    const [selectedAssetEdit, setSelectedAssetEdit] = useState(null); // for Edit Modal
     const [selectedAssetDelete, setSelectedAssetDelete] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchData();
@@ -47,6 +50,12 @@ const AssetsLayer = () => {
     };
 
     const closeModal = () => setSelectedAsset(null);
+
+    const handleQRClick = (asset) => {
+        setQRCode(asset.qrCode);  // Set the QR code image
+        setSelectedAsset(asset);  // Set selected asset for navigation
+        setShowQRModal(true);     // Show the modal
+    };
 
     const columns = React.useMemo(() => [
         {
@@ -118,6 +127,23 @@ const AssetsLayer = () => {
             }
         },
         {
+            Header: 'QR Code',
+            accessor: row => row.qrCode,
+            Cell: ({ row }) => {
+                const qrCode = row.original.qrCode;
+                return qrCode ? (
+                    <button
+                        className="btn btn-sm btn-info"
+                        onClick={() => handleQRClick(row.original)} // Handle QR click
+                    >
+                        View QR Code
+                    </button>
+                ) : (
+                    <div>No QR Code</div>
+                );
+            }
+        },
+        {
             Header: 'More Info',
             Cell: ({ row }) => (
                 <button
@@ -134,7 +160,7 @@ const AssetsLayer = () => {
                 <div className="d-flex justify-content-center gap-2">
                     <button
                         className="btn btn-sm btn-primary"
-                        onClick={() => { setSelectedAssetEdit(row.original); setEditModalShow(true); }}
+                        onClick={() => { setSelectedAssetEdit(row.original); }}
                     >
                         <Icon icon="mdi:pencil" />
                     </button>
@@ -167,7 +193,7 @@ const AssetsLayer = () => {
                 <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
                 <button
                     className="btn btn-success ml-3"
-                    onClick={() => setShowModal(true)} // Show modal on button click
+                    onClick={() => setShowModal(true)}
                 >
                     + Create New Asset
                 </button>
@@ -214,45 +240,48 @@ const AssetsLayer = () => {
                 )}
             </div>
 
-            {/* Modal for More Info */}
-            {selectedAsset && (
+            {/* QR Code Modal */}
+            {showQRModal && (
                 <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog" role="document">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Asset Info</h5>
-                                <button type="button" className="btn-close" onClick={closeModal}></button>
+                                <h5 className="modal-title">QR Code</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowQRModal(false)}></button>
                             </div>
                             <div className="modal-body d-flex flex-column">
-                                <p><strong>Location:</strong> {selectedAsset.location}</p>
-                                <p><strong>Installation Date:</strong> {new Date(selectedAsset.installationDate).toLocaleDateString()}</p>
-                                {selectedAsset.photo ? (
-                                    <img
-                                        src={selectedAsset.photo}
-                                        alt="Asset"
-                                        style={{ width: '400px', height: '50vh', borderRadius: '8px' }}
-                                        className='align-self-center'
-                                    />
-                                ) : (
-                                    <div>No photo available.</div>
-                                )}
+                                <img src={qrCode} alt="QR Code" style={{ width: '100%' }} />
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={closeModal}>Close</button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        if (selectedAsset && selectedAsset._id) {
+                                            navigate(`/asset-details/${selectedAsset._id}`);
+                                        } else {
+                                            console.error('Selected asset is missing or invalid.');
+                                        }
+                                    }}
+                                >
+                                    Go to Asset Details
+                                </button>
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowQRModal(false)}>
+                                    Close
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Create New Asset Modal */}
+            {/* Modals for Create, Edit, and Delete */}
             <CreateAssetModal
                 show={showModal}
-                handleClose={() => setShowModal(false)} // Close the modal
+                handleClose={() => setShowModal(false)}
                 fetchData={fetchData}
             />
 
-            {/* Edit Asset Modal */}
             {selectedAssetEdit && (<EditAssetModal
                 show={editModalShow}
                 handleClose={() => setEditModalShow(false)}
@@ -260,7 +289,6 @@ const AssetsLayer = () => {
                 selectedAsset={selectedAssetEdit}
             />)}
 
-            {/* Delete Modal */}
             {selectedAssetDelete && (
                 <DeleteModal
                     show={showDeleteModal}
