@@ -5,19 +5,26 @@ import axiosInstance from "../axiosConfig";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
+import CreateAdminModal from './modals/CreateAdminModal';
+import EditAdminModal from './modals/EditAdminModal';
+import DeleteAdminModal from './modals/DeleteAdminModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
         className="form-control w-30"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search Admin..."
+        placeholder="Search Vendor..."
     />
 );
 
 const AdminsLayer = () => {
     const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedAdmin, setSelectedAdmin] = useState(null);
 
     useEffect(() => {
         fetchAdmins();
@@ -25,11 +32,7 @@ const AdminsLayer = () => {
 
     const fetchAdmins = async () => {
         try {
-            const response = await axiosInstance.get('/admin', {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+            const response = await axiosInstance.get('/admin');
             setAdmins(response.data);
             setLoading(false);
         } catch (error) {
@@ -37,6 +40,16 @@ const AdminsLayer = () => {
             toast.error('Failed to fetch admins');
             setLoading(false);
         }
+    };
+
+    const handleEditClick = (admin) => {
+        setSelectedAdmin(admin);
+        setShowEditModal(true);
+    };
+
+    const handleDeleteClick = (admin) => {
+        setSelectedAdmin(admin);
+        setShowDeleteModal(true);
     };
 
     const columns = React.useMemo(() => [
@@ -90,11 +103,13 @@ const AdminsLayer = () => {
                 <div className="d-flex gap-2">
                     <button
                         className="btn btn-sm btn-primary"
+                        onClick={() => handleEditClick(row.original)}
                     >
                         <Icon icon="mdi:pencil" />
                     </button>
                     <button
                         className="btn btn-sm btn-danger"
+                        onClick={() => handleDeleteClick(row.original)}
                     >
                         <Icon icon="mdi:delete" />
                     </button>
@@ -122,6 +137,7 @@ const AdminsLayer = () => {
                     <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
                     <button
                         className="btn btn-success"
+                        onClick={() => setShowCreateModal(true)}
                     >
                         <Icon icon="mdi:plus" />
                         Add New Admin
@@ -171,6 +187,26 @@ const AdminsLayer = () => {
                     </div>
                 )}
             </div>
+
+            <CreateAdminModal 
+                show={showCreateModal}
+                handleClose={() => setShowCreateModal(false)}
+                fetchAdmins={fetchAdmins}
+            />
+
+            <EditAdminModal 
+                show={showEditModal}
+                handleClose={() => setShowEditModal(false)}
+                fetchAdmins={fetchAdmins}
+                selectedAdmin={selectedAdmin}
+            />
+
+            <DeleteAdminModal 
+                show={showDeleteModal}
+                handleClose={() => setShowDeleteModal(false)}
+                admin={selectedAdmin}
+                fetchAdmins={fetchAdmins}
+            />
         </div>
     );
 };

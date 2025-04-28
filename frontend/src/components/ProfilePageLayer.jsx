@@ -10,6 +10,7 @@ const ProfilePageLayer = () => {
     const [imagePreview, setImagePreview] = useState(user?.photo || 'assets/images/user-grid/user-grid-img13.png');
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
     const [formData, setFormData] = useState({
         name: user?.name || '',
         email: user?.email || '',
@@ -72,14 +73,16 @@ const ProfilePageLayer = () => {
         return !Object.values(newErrors).some(error => error !== '');
     };
 
-    const readURL = (input) => {
-        if (input.target.files && input.target.files[0]) {
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setSelectedFile(file);
+            // Create a preview URL for the image
             const reader = new FileReader();
             reader.onload = (e) => {
                 setImagePreview(e.target.result);
-                setFormData(prev => ({ ...prev, photo: e.target.result }));
             };
-            reader.readAsDataURL(input.target.files[0]);
+            reader.readAsDataURL(file);
         }
     };
 
@@ -122,14 +125,25 @@ const ProfilePageLayer = () => {
                 ? `/admin/${user?.id}`
                 : `/tech/${user?.id}`;
 
-            const response = await axiosInstance.put(endpoint, formData);
+            // Create FormData object
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', formData.name);
+            formDataToSend.append('email', formData.email);
+            formDataToSend.append('phone', formData.phone);
+            
+            // Add the file if it exists
+            if (selectedFile) {
+                formDataToSend.append('profilePic', selectedFile);
+            }
+
+            const response = await axiosInstance.put(endpoint, formDataToSend);
             
             if (response.data) {
                 updateUser({
                     name: formData.name,
                     email: formData.email,
                     phone: formData.phone,
-                    photo: formData.photo
+                    photo: response.data.admin?.photo || response.data.tech?.photo || formData.photo
                 });
 
                 await Swal.fire({
@@ -170,7 +184,7 @@ const ProfilePageLayer = () => {
                                     <div className="w-100 h-100 bg-neutral-200 animate-pulse" />
                                 ) : (
                                     <img
-                                        src={user?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&size=128`}
+                                        src={imagePreview}
                                         alt="Profile"
                                         className="w-100 h-100 object-fit-cover"
                                         onError={(e) => {
@@ -306,7 +320,7 @@ const ProfilePageLayer = () => {
                                                 id="imageUpload"
                                                 accept=".png, .jpg, .jpeg"
                                                 hidden
-                                                onChange={readURL}
+                                                onChange={handleFileChange}
                                             />
                                             <label
                                                 htmlFor="imageUpload"

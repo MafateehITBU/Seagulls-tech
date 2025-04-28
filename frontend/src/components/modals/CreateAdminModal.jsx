@@ -1,25 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import axiosInstance from "../../axiosConfig";
 import { toast } from 'react-toastify';
 
-const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians }) => {
+const CreateAdminModal = ({ show, handleClose, fetchAdmins }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [phone, setPhone] = useState('');
-    const [dob, setDob] = useState('');
+    const [bio, setBio] = useState('');
     const [profilePic, setProfilePic] = useState(null);
     const [errors, setErrors] = useState({});
-
-    useEffect(() => {
-        if (technician) {
-            setName(technician.name || '');
-            setEmail(technician.email || '');
-            setPhone(technician.phone || '');
-            setDob(new Date(technician.dob).toISOString().split('T')[0] || '');
-            setProfilePic(null);
-        }
-    }, [technician]);
 
     const validateForm = () => {
         const newErrors = {};
@@ -40,12 +31,24 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
             newErrors.phone = 'Phone must start with 07 followed by 7,8, or 9 and 7 digits';
         }
 
-        if (!dob) {
-            newErrors.dob = 'Date of birth is required';
+        if (!password) {
+            newErrors.password = 'Password is required';
+        } else if (!/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password)) {
+            newErrors.password = 'Password must be at least 8 characters, contain one uppercase letter, one number, and one special character';
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
+    };
+
+    const resetForm = () => {
+        setName('');
+        setEmail('');
+        setPassword('');
+        setPhone('');
+        setBio('');
+        setProfilePic(null);
+        setErrors({});
     };
 
     const handleSubmit = async (e) => {
@@ -56,32 +59,32 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
         }
 
         try {
-            const dataToSend = {
-                name,
-                email,
-                phone,
-                dob
-            };
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', name);
+            formDataToSend.append('email', email);
+            formDataToSend.append('password', password);
+            formDataToSend.append('phone', phone);
+            formDataToSend.append('bio', bio);
+            if (profilePic) {
+                formDataToSend.append('profilePic', profilePic);
+            }
 
-            await axiosInstance.put(`/tech/${technician._id}`, dataToSend, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+            await axiosInstance.post('/admin/add', formDataToSend);
             
-            toast.success('Technician updated successfully');
-            fetchTechnicians();
+            toast.success('Admin added successfully');
+            fetchAdmins();
+            resetForm();
             handleClose();
         } catch (error) {
-            console.error('Error updating technician:', error);
-            toast.error(error.response?.data?.message || 'Failed to update technician');
+            console.error('Error adding admin:', error);
+            toast.error(error.response?.data?.message || 'Failed to add admin');
         }
     };
 
     return (
         <Modal show={show} onHide={handleClose}>
             <Modal.Header closeButton>
-                <Modal.Title className="h5">Update Technician</Modal.Title>
+                <Modal.Title className="h5">Add New Admin</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form onSubmit={handleSubmit} className='d-flex flex-column'>
@@ -113,6 +116,20 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
                         </Form.Control.Feedback>
                     </Form.Group>
 
+                    <Form.Group controlId="password" className="mb-3">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter password"
+                            isInvalid={!!errors.password}
+                        />
+                        <Form.Control.Feedback type="invalid">
+                            {errors.password}
+                        </Form.Control.Feedback>
+                    </Form.Group>
+
                     <Form.Group controlId="phone" className="mb-3">
                         <Form.Label>Phone</Form.Label>
                         <Form.Control
@@ -127,17 +144,15 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
                         </Form.Control.Feedback>
                     </Form.Group>
 
-                    <Form.Group controlId="dob" className="mb-3">
-                        <Form.Label>Date of Birth</Form.Label>
+                    <Form.Group controlId="bio" className="mb-3">
+                        <Form.Label>Bio</Form.Label>
                         <Form.Control
-                            type="date"
-                            value={dob}
-                            onChange={(e) => setDob(e.target.value)}
-                            isInvalid={!!errors.dob}
+                            as="textarea"
+                            rows={3}
+                            value={bio}
+                            onChange={(e) => setBio(e.target.value)}
+                            placeholder="Enter bio"
                         />
-                        <Form.Control.Feedback type="invalid">
-                            {errors.dob}
-                        </Form.Control.Feedback>
                     </Form.Group>
 
                     <Form.Group controlId="profilePic" className="mb-3">
@@ -150,7 +165,7 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
                     </Form.Group>
 
                     <Button variant="primary" type="submit" className='mt-4 align-self-center' style={{ width: "150px" }}>
-                        Update Technician
+                        Add Admin
                     </Button>
                 </Form>
             </Modal.Body>
@@ -158,4 +173,4 @@ const UpdateTechnicianModal = ({ show, handleClose, technician, fetchTechnicians
     );
 };
 
-export default UpdateTechnicianModal;
+export default CreateAdminModal; 
