@@ -14,14 +14,11 @@ const DashBoardLayerTen = () => {
       {/* UnitCountSeven */}
       <UnitCountSeven />
 
-      {/* IncomeVsExpense */}
-      <IncomeVsExpense />
+  
 
       {/* UsersChart */}
       <UsersChart />
 
-      {/* TopSuppliers */}
-      <TopSuppliers />
 
       {/* TopCustomer */}
       <TopCustomer />

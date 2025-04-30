@@ -10,6 +10,10 @@ const UnitCountSeven = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { user } = useAuth();
+    const [closedTicketsCount, setClosedTicketsCount] = useState(0);
+    const [vendorCount, setVendorCount] = useState(0);
+    const [sparePartsCount, setSparePartsCount] = useState(0);
+    const [assetCount, setAssetCount] = useState(0);
 
     useEffect(() => {
         const fetchTechCount = async () => {
@@ -18,6 +22,33 @@ const UnitCountSeven = () => {
                 setTechCount(response.data.techs.length);
             } catch (error) {
                 console.error('Error fetching tech count:', error);
+            }
+        };
+
+        const fetchVendorCount = async () => {
+            try {
+                const response = await axiosInstance.get('/vendor');
+                setVendorCount(response.data.vendors.length);
+            } catch (error) {
+                console.error('Error fetching vendor count:', error);
+            }
+        };
+
+        const fetchSparePartsCount = async () => {
+            try {
+                const response = await axiosInstance.get('/sparepart');
+                setSparePartsCount(response.data.length);
+            } catch (error) {
+                console.error('Error fetching spare parts count:', error);
+            }
+        };
+
+        const fetchAssetCount = async () => {
+            try {
+                const response = await axiosInstance.get('/asset');
+                setAssetCount(response.data.length);
+            } catch (error) {
+                console.error('Error fetching asset count:', error);
             }
         };
 
@@ -72,8 +103,30 @@ const UnitCountSeven = () => {
             }
         };
 
+        const fetchClosedTickets = async () => {
+            try {
+                setLoading(true);
+                const [cleaningRes, maintenanceRes, accidentRes] = await Promise.all([
+                    axiosInstance.get('/ticket/closed-cleaning'),
+                    axiosInstance.get('/ticket/closed-maintenance'),
+                    axiosInstance.get('/ticket/closed-accident')
+                ]);
+
+                const totalClosed = cleaningRes.data.length + maintenanceRes.data.length + accidentRes.data.length;
+                setClosedTicketsCount(totalClosed);
+            } catch (error) {
+                console.error('Error fetching closed tickets:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchTechCount();
+        fetchVendorCount();
+        fetchSparePartsCount();
+        fetchAssetCount();
         fetchTickets();
+        fetchClosedTickets();
     }, []);
 
     return (
@@ -128,7 +181,7 @@ const UnitCountSeven = () => {
                                         </span>
                                     </div>
                                     <p className='text-sm mb-0'>
-                                         Opened Cleaning Tickets{" "}
+                                        Opened Cleaning Tickets{" "}
                                     </p>
                                 </div>
                             </div>
@@ -154,7 +207,7 @@ const UnitCountSeven = () => {
                                         </span>
                                     </div>
                                     <p className='text-sm mb-0'>
-                                         Opened Maintenance Tickets{" "}
+                                        Opened Maintenance Tickets{" "}
                                     </p>
                                 </div>
                             </div>
@@ -180,10 +233,108 @@ const UnitCountSeven = () => {
                                         </span>
                                     </div>
                                     <p className='text-sm mb-0'>
-                                         Opened Accident Tickets{" "}
+                                        Opened Accident Tickets{" "}
                                     </p>
                                 </div>
                             </div>
+                            <div className='col-xxl-3 col-xl-4 col-sm-6'>
+                                <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-1 left-line line-bg-primary position-relative overflow-hidden'>
+                                    <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
+                                        <div>
+                                            <span className='mb-2 fw-medium text-secondary-light text-md'>
+                                                Closed Tickets
+                                            </span>
+                                            <h6 className='fw-semibold mb-1'>
+                                                {loading ? (
+                                                    <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                                                ) : (
+                                                    closedTicketsCount
+                                                )}
+                                            </h6>
+                                        </div>
+                                        <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-primary-100 text-primary-600'>
+                                            <i className='ri-checkbox-circle-line' />
+                                        </span>
+                                    </div>
+                                    <p className='text-sm mb-0'>
+                                        Total Closed Tickets{" "}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className='col-xxl-3 col-xl-4 col-sm-6'>
+                                <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-2 left-line line-bg-lilac position-relative overflow-hidden'>
+                                    <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
+                                        <div>
+                                            <span className='mb-2 fw-medium text-secondary-light text-md'>
+                                                Assets
+                                            </span>
+                                            <h6 className='fw-semibold mb-1'>
+                                                {loading ? (
+                                                    <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                                                ) : (
+                                                    assetCount
+                                                )}
+                                            </h6>
+                                        </div>
+                                        <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-lilac-200 text-lilac-600'>
+                                            <i className='ri-building-2-line' />
+                                        </span>
+                                    </div>
+                                    <p className='text-sm mb-0'>
+                                        Total Assets{" "}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='col-xxl-3 col-xl-4 col-sm-6'>
+                                <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-3 left-line line-bg-success position-relative overflow-hidden'>
+                                    <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
+                                        <div>
+                                            <span className='mb-2 fw-medium text-secondary-light text-md'>
+                                                Vendors
+                                            </span>
+                                            <h6 className='fw-semibold mb-1'>
+                                                {loading ? (
+                                                    <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                                                ) : (
+                                                    vendorCount
+                                                )}
+                                            </h6>
+                                        </div>
+                                        <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-success-200 text-success-600'>
+                                            <i className='ri-store-2-line' />
+                                        </span>
+                                    </div>
+                                    <p className='text-sm mb-0'>
+                                        Total Vendors{" "}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='col-xxl-3 col-xl-4 col-sm-6'>
+                                <div className='px-20 py-16 shadow-none radius-8 h-100 gradient-deep-4 left-line line-bg-warning position-relative overflow-hidden'>
+                                    <div className='d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8'>
+                                        <div>
+                                            <span className='mb-2 fw-medium text-secondary-light text-md'>
+                                                Spare Parts
+                                            </span>
+                                            <h6 className='fw-semibold mb-1'>
+                                                {loading ? (
+                                                    <div className="h-6 w-16 bg-neutral-200 rounded animate-pulse" />
+                                                ) : (
+                                                    sparePartsCount
+                                                )}
+                                            </h6>
+                                        </div>
+                                        <span className='w-44-px h-44-px radius-8 d-inline-flex justify-content-center align-items-center text-2xl mb-12 bg-warning-200 text-warning-600'>
+                                            <i className='ri-tools-line' />
+                                        </span>
+                                    </div>
+                                    <p className='text-sm mb-0'>
+                                        Total Spare Parts{" "}
+                                    </p>
+                                </div>
+                            </div>
+                         
                         </div>
                     </div>
                 </div>
