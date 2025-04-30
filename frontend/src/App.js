@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import RouteScrollToTop from "./helper/RouteScrollToTop";
+import 'leaflet/dist/leaflet.css';
 import ProtectedRoute from "./components/ProtectedRoute";
 import SignInPage from "./pages/SignInPage";
 import HomePageTen from "./pages/HomePageTen";

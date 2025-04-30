@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTable, useGlobalFilter, useSortBy } from 'react-table';
 import { Icon } from '@iconify/react';
+import { Modal, Button, Form } from 'react-bootstrap';
 import axiosInstance from "../../axiosConfig";
 import ReportModal from '../modals/ReportModal';
 import { ToastContainer, toast } from 'react-toastify';
@@ -27,6 +28,9 @@ const AccidentLayer = () => {
     const [showCrocaModal, setShowCrocaModal] = useState(false);
     const [selecetdTicketDelete, setSelectedTicketDelete] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [selectedTicketForReject, setSelectedTicketForReject] = useState(null);
+    const [rejectReason, setRejectReason] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -53,6 +57,38 @@ const AccidentLayer = () => {
             toast.success('Ticket closed successfully!', { position: "top-right" });
         } catch (error) {
             toast.error('Failed to close the ticket.', { position: "top-right" });
+        }
+    };
+
+    const handleApprove = async (ticketId) => {
+        try {
+            await axiosInstance.post(`/ticket/approve/${ticketId}`);
+            toast.success('Ticket approved successfully!', { position: "top-right" });
+            fetchData(); // Refresh tickets
+        } catch (error) {
+            toast.error('Failed to approve the ticket.', { position: "top-right" });
+        }
+    };
+
+    const openRejectModal = (ticketId) => {
+        setSelectedTicketForReject(ticketId);
+        setShowRejectModal(true);
+    };
+
+    const handleReject = async () => {
+        if (!rejectReason.trim()) {
+            toast.error('Please provide a rejection reason.', { position: "top-right" });
+            return;
+        }
+
+        try {
+            await axiosInstance.post(`/ticket/reject/${selectedTicketForReject}`, { rejectReport: rejectReason });
+            toast.success('Ticket rejected successfully!', { position: "top-right" });
+            setShowRejectModal(false);
+            setRejectReason('');
+            fetchData(); // Refresh tickets
+        } catch (error) {
+            toast.error('Failed to reject the ticket.', { position: "top-right" });
         }
     };
 
@@ -93,11 +129,44 @@ const AccidentLayer = () => {
         {
             Header: 'Approved',
             accessor: row => row.ticketId?.approved,
-            Cell: ({ value }) => (
-                <span className={`badge ${value ? 'bg-success' : 'bg-danger'}`}>
-                    {value ? 'Approved' : 'Not Approved'}
-                </span>
-            ),
+            Cell: ({ row }) => {
+                const approved = row.original.ticketId?.approved;
+                const ticketId = row.original.ticketId?._id;
+
+                if (approved === true) {
+                    return <span className="badge bg-success">Approved</span>;
+                }
+
+                if (approved === false) {
+                    return <span className="badge bg-danger">Rejected</span>;
+                }
+
+                // If undefined or null => show dropdown
+                return (
+                    <div className="dropdown">
+                        <span
+                            className="badge bg-secondary dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            role="button"
+                            style={{ cursor: 'pointer' }}
+                        >
+                            Take Action
+                        </span>
+                        <ul className="dropdown-menu">
+                            <li>
+                                <button className="dropdown-item" onClick={() => handleApprove(ticketId)}>
+                                    Approve
+                                </button>
+                            </li>
+                            <li>
+                                <button className="dropdown-item" onClick={() => openRejectModal(ticketId)}>
+                                    Reject
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                );
+            },
         },
         {
             Header: 'Status',
@@ -253,6 +322,35 @@ const AccidentLayer = () => {
                     </div>
                 )}
             </div>
+
+            {/* Reject Reason Modal */}
+            <Modal show={showRejectModal} onHide={() => setShowRejectModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Reject Ticket</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group controlId="rejectReason">
+                            <Form.Label>Rejection Reason</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={4}
+                                placeholder="Enter rejection reason..."
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowRejectModal(false)}>
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={handleReject}>
+                        Submit Rejection
+                    </Button>
+                </Modal.Footer>
+            </Modal>
 
             {selectedReport && (
                 <ReportModal

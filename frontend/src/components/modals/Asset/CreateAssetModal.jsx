@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-import axiosInstance from "../../../axiosConfig";
+import axiosInstance from '../../../axiosConfig';
 import { toast } from 'react-toastify';
+import LocationPickerMap from '../../LocationPickerMap';
 
 const CreateAssetModal = ({ show, handleClose, fetchData }) => {
     const [assetNo, setAssetNo] = useState('');
@@ -20,7 +21,11 @@ const CreateAssetModal = ({ show, handleClose, fetchData }) => {
     const fileInputRef = useRef(null);
 
     const allowedTypes = /jpeg|jpg|png|gif|webp|heic|heif/;
-    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const maxFileSize = 5 * 1024 * 1024;
+
+    useEffect(() => {
+        if (!show) resetForm();
+    }, [show]);
 
     const resetForm = () => {
         setAssetNo('');
@@ -35,8 +40,22 @@ const CreateAssetModal = ({ show, handleClose, fetchData }) => {
         setCleaningIntervalInDays('');
         setMaintIntervalInDays('');
         setPhoto(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const fileType = file.type.split('/')[1].toLowerCase();
+            if (!allowedTypes.test(fileType)) {
+                toast.error('Invalid file type. Supported: jpeg, jpg, png, gif, webp, heic, heif.');
+                return;
+            }
+            if (file.size > maxFileSize) {
+                toast.error('File too large. Max size: 5MB.');
+                return;
+            }
+            setPhoto(file);
         }
     };
 
@@ -44,7 +63,12 @@ const CreateAssetModal = ({ show, handleClose, fetchData }) => {
         e.preventDefault();
 
         if (!photo) {
-            toast.error('Please upload a photo for the asset.', { position: "top-right" });
+            toast.error('Please upload a photo of the asset.');
+            return;
+        }
+
+        if (!coordinates.lat || !coordinates.long) {
+            toast.error('Please select a location on the map.');
             return;
         }
 
@@ -57,191 +81,119 @@ const CreateAssetModal = ({ show, handleClose, fetchData }) => {
         formData.append('location', location);
         formData.append('coordinates[lat]', coordinates.lat);
         formData.append('coordinates[long]', coordinates.long);
-        formData.append('installationDate', installationDate);
+        if (installationDate) formData.append('installationDate', installationDate);
         formData.append('quantity', quantity || 1);
-        formData.append('cleaningIntervalInDays', cleaningIntervalInDays);
-        formData.append('maintIntervalInDays', maintIntervalInDays);
+        if (cleaningIntervalInDays) formData.append('cleaningIntervalInDays', cleaningIntervalInDays);
+        if (maintIntervalInDays) formData.append('maintIntervalInDays', maintIntervalInDays);
         formData.append('assetPic', photo);
 
         try {
-            const response = await axiosInstance.post('/asset', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+            await axiosInstance.post('/asset', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
-
-            toast.success('Asset created successfully!', { position: "top-right" });
+            toast.success('Asset created successfully!');
             fetchData();
-            resetForm();
             handleClose();
         } catch (error) {
             const backendMessage = error.response?.data?.message || error.message;
-            toast.error('Failed to create the asset. ' + backendMessage, { position: "top-right" });
-        }
-    };
-
-    const handlePhotoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const fileType = file.type.split('/')[1].toLowerCase();
-            if (!allowedTypes.test(fileType)) {
-                toast.error('Invalid file type. Please upload an image (jpeg, jpg, png, gif, webp, heic, heif).', { position: "top-right" });
-                return;
-            }
-            if (file.size > maxFileSize) {
-                toast.error('File is too large. Maximum allowed size is 5MB.', { position: "top-right" });
-                return;
-            }
-            setPhoto(file);
+            toast.error(`Failed to create asset. ${backendMessage}`);
         }
     };
 
     return (
         <Modal show={show} onHide={handleClose} scrollable size="lg">
             <Modal.Header closeButton>
-                <Modal.Title className="h5">Create New Asset</Modal.Title>
+                <Modal.Title>Create New Asset</Modal.Title>
             </Modal.Header>
-            <Modal.Body style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+            <Modal.Body>
                 <Form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
 
-                    <div className="d-flex gap-3 align-items-start">
-                        <Form.Group controlId="assetNo" style={{ flex: 1 }}>
+                    <div className="d-flex gap-3">
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Asset No.</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={assetNo}
-                                onChange={(e) => setAssetNo(e.target.value)}
-                                required
-                            />
+                            <Form.Control type="text" value={assetNo} onChange={(e) => setAssetNo(e.target.value)} required />
                         </Form.Group>
 
-                        <Form.Group controlId="assetName" style={{ flex: 1 }}>
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Asset Name</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={assetName}
-                                onChange={(e) => setAssetName(e.target.value)}
-                                required
-                            />
+                            <Form.Control type="text" value={assetName} onChange={(e) => setAssetName(e.target.value)} required />
                         </Form.Group>
                     </div>
 
-                    <div className="d-flex gap-3 align-items-start">
-                        <Form.Group controlId="assetType" style={{ flex: 1 }}>
+                    <div className="d-flex gap-3">
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Asset Type</Form.Label>
-                            <Form.Control
-                                as="select"
-                                value={assetType}
-                                onChange={(e) => setAssetType(e.target.value)}
-                            >
+                            <Form.Select value={assetType} onChange={(e) => setAssetType(e.target.value)}>
                                 <option value="DS8">DS8</option>
                                 <option value="DS10">DS10</option>
                                 <option value="DS12">DS12</option>
-                            </Form.Control>
+                            </Form.Select>
                         </Form.Group>
 
-                        <Form.Group controlId="assetSubType" style={{ flex: 1 }}>
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Asset SubType</Form.Label>
-                            <Form.Control
-                                as="select"
-                                value={assetSubType}
-                                onChange={(e) => setAssetSubType(e.target.value)}
-                            >
+                            <Form.Select value={assetSubType} onChange={(e) => setAssetSubType(e.target.value)}>
                                 <option value="8SQM">8SQM</option>
                                 <option value="10SQM">10SQM</option>
                                 <option value="12SQM">12SQM</option>
-                            </Form.Control>
+                            </Form.Select>
                         </Form.Group>
                     </div>
 
-                    <div className="d-flex gap-3 align-items-start">
-                        <Form.Group controlId="assetStatus" style={{ flex: 1 }}>
+                    <div className="d-flex gap-3">
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Asset Status</Form.Label>
-                            <Form.Control
-                                as="select"
-                                value={assetStatus}
-                                onChange={(e) => setAssetStatus(e.target.value)}
-                            >
+                            <Form.Select value={assetStatus} onChange={(e) => setAssetStatus(e.target.value)}>
                                 <option value="Active">Active</option>
                                 <option value="Inactive">Inactive</option>
-                            </Form.Control>
+                            </Form.Select>
                         </Form.Group>
 
-                        <Form.Group controlId="location" style={{ flex: 1 }}>
-                            <Form.Label>Location</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                required
-                            />
+                        <Form.Group style={{ flex: 1 }}>
+                            <Form.Label>Location (text)</Form.Label>
+                            <Form.Control type="text" value={location} onChange={(e) => setLocation(e.target.value)} />
                         </Form.Group>
                     </div>
 
-                    <div className="d-flex gap-3 align-items-start">
-                        <Form.Group controlId="coordinatesLat" style={{ flex: 1 }}>
-                            <Form.Label>Latitude</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={coordinates.lat}
-                                onChange={(e) => setCoordinates({ ...coordinates, lat: e.target.value })}
-                            />
-                        </Form.Group>
-
-                        <Form.Group controlId="coordinatesLong" style={{ flex: 1 }}>
-                            <Form.Label>Longitude</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={coordinates.long}
-                                onChange={(e) => setCoordinates({ ...coordinates, long: e.target.value })}
-                            />
-                        </Form.Group>
-                    </div>
-
-                    <div className="d-flex gap-3 align-items-start">
-                        <Form.Group controlId="installationDate" style={{ flex: 1 }}>
+                    <div className="d-flex gap-3">
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Installation Date</Form.Label>
-                            <Form.Control
-                                type="date"
-                                value={installationDate}
-                                onChange={(e) => setInstallationDate(e.target.value)}
-                            />
+                            <Form.Control type="date" value={installationDate} onChange={(e) => setInstallationDate(e.target.value)} />
                         </Form.Group>
 
-                        <Form.Group controlId="quantity" style={{ flex: 1 }}>
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Quantity</Form.Label>
-                            <Form.Control
-                                type="number"
-                                min="1"
-                                value={quantity}
-                                onChange={(e) => setQuantity(e.target.value)}
-                            />
+                            <Form.Control type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
                         </Form.Group>
                     </div>
 
-                    <div className="d-flex gap-3 align-items-start">
-                        <Form.Group controlId="cleaningIntervalInDays" style={{ flex: 1 }}>
+                    <div className="d-flex gap-3">
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Cleaning Interval (Days)</Form.Label>
-                            <Form.Control
-                                type="number"
-                                min="1"
-                                value={cleaningIntervalInDays}
-                                onChange={(e) => setCleaningIntervalInDays(e.target.value)}
-                            />
+                            <Form.Control type="number" min="1" value={cleaningIntervalInDays} onChange={(e) => setCleaningIntervalInDays(e.target.value)} />
                         </Form.Group>
 
-                        <Form.Group controlId="maintIntervalInDays" style={{ flex: 1 }}>
+                        <Form.Group style={{ flex: 1 }}>
                             <Form.Label>Maintenance Interval (Days)</Form.Label>
-                            <Form.Control
-                                type="number"
-                                min="1"
-                                value={maintIntervalInDays}
-                                onChange={(e) => setMaintIntervalInDays(e.target.value)}
-                            />
+                            <Form.Control type="number" min="1" value={maintIntervalInDays} onChange={(e) => setMaintIntervalInDays(e.target.value)} />
                         </Form.Group>
                     </div>
 
-                    <Form.Group controlId="photo">
+                    <Form.Group>
+                        <Form.Label>Select Location on Map</Form.Label>
+                        <LocationPickerMap
+                            onLocationSelect={(coords) => {
+                                if (coords) {
+                                    const { lat, lng } = coords;
+                                    setCoordinates({ lat, long: lng });
+                                } else {
+                                    setCoordinates({ lat: '', long: '' });
+                                }
+                            }}
+                        />
+                    </Form.Group>
+
+                    <Form.Group>
                         <Form.Label>Photo</Form.Label>
                         <Form.Control
                             type="file"

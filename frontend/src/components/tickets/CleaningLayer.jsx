@@ -60,7 +60,7 @@ const CleaningLayer = () => {
         },
         {
             Header: 'Opened By',
-            accessor: row => row.ticketId?.openedBy?.name || 'N/A',
+            accessor: row => row.ticketId?.openedBy?.name || 'System',
         },
         {
             Header: 'Assigned To',
@@ -86,15 +86,6 @@ const CleaningLayer = () => {
         {
             Header: 'Created At',
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
-        },
-        {
-            Header: 'Approved',
-            accessor: row => row.ticketId?.approved,
-            Cell: ({ value }) => (
-                <span className={`badge ${value ? 'bg-success' : 'bg-danger'}`}>
-                    {value ? 'Approved' : 'Not Approved'}
-                </span>
-            ),
         },
         {
             Header: 'Status',

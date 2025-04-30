@@ -4,6 +4,18 @@ import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import QRCode from 'qrcode';
 
+// helper: To calculate the next cleaning/ maintenance date
+function calculateNextDate(startDate, intervalInDays) {
+    let nextDate = new Date(startDate);
+    const today = new Date();
+
+    while (nextDate <= today) {
+        nextDate = new Date(nextDate.getTime() + intervalInDays * 24 * 60 * 60 * 1000);
+    }
+
+    return nextDate;
+}
+
 /**------------------------------------------
  * @desc Create a new asset
  * @route POST /api/asset
@@ -24,7 +36,6 @@ export const createAsset = async (req, res) => {
             quantity = 1,
             cleaningIntervalInDays,
             maintIntervalInDays,
-            maintenanceReports = []
         } = req.body;
 
         if (!assetNo || !assetName || !assetType || !assetSubType || !location || !coordinates || !installationDate || !cleaningIntervalInDays || !maintIntervalInDays) {
@@ -63,8 +74,8 @@ export const createAsset = async (req, res) => {
             fs.unlinkSync(req.file.path);
         }
 
-        const nextCleaningDate = new Date(installationDateObj.getTime() + cleaningIntervalInDays * 24 * 60 * 60 * 1000);
-        const nextMaintenanceDate = new Date(installationDateObj.getTime() + maintIntervalInDays * 24 * 60 * 60 * 1000);
+        const nextCleaningDate = calculateNextDate(installationDateObj, cleaningIntervalInDays);
+        const nextMaintenanceDate = calculateNextDate(installationDateObj, maintIntervalInDays);
 
         const newAsset = new Asset({
             assetNo,
@@ -84,8 +95,7 @@ export const createAsset = async (req, res) => {
             maintenanceSchedule: {
                 intervalInDays: maintIntervalInDays,
                 nextMaintenanceDate
-            },
-            maintenanceReports
+            }
         });
 
         await newAsset.save();
@@ -113,16 +123,6 @@ export const createAsset = async (req, res) => {
 export const getAllAssets = async (req, res) => {
     try {
         const assets = await Asset.find();
-        // populate the maintenanceReports field if not empty with description
-        for (let i = 0; i < assets.length; i++) {
-            if (assets[i].maintenanceReports.length > 0) {
-                assets[i].maintenanceReports = await Promise.all(
-                    assets[i].maintenanceReports.map(async (report) => {
-                        return await report.populate('description');
-                    })
-                );
-            }
-        }
         res.status(200).json(assets);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -132,8 +132,8 @@ export const getAllAssets = async (req, res) => {
 /**------------------------------------------
  * @desc Get a single asset
  * @route GET /api/asset/:id
- * @access Private
- * @role Admin, Super Admin
+ * @access Public
+ * @role Admin, Super Admin, Tech
  -------------------------------------------*/
 export const getAssetById = async (req, res) => {
     const { id } = req.params;
@@ -141,14 +141,6 @@ export const getAssetById = async (req, res) => {
         const asset = await Asset.findById(id);
         if (!asset) {
             return res.status(404).json({ message: "Asset not found" });
-        }
-        // populate the maintenanceReports field if not empty with description
-        if (asset.maintenanceReports.length > 0) {
-            asset.maintenanceReports = await Promise.all(
-                asset.maintenanceReports.map(async (report) => {
-                    return await report.populate('description');
-                })
-            );
         }
         res.status(200).json(asset);
     } catch (err) {

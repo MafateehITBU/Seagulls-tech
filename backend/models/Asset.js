@@ -69,12 +69,6 @@ const assetSchema = new mongoose.Schema({
             type: Date,
         }
     },
-    maintenanceReports: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Report',
-        }
-    ],
     qrCode: {
         type: String, // this will store the Data URL (base64 image)
     },

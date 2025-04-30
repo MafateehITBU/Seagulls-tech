@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import axiosInstance from '../../../axiosConfig';
 import { toast } from 'react-toastify';
+import LocationPickerMap from '../../LocationPickerMap'; // Import the map component
 
 const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
     const [formData, setFormData] = useState({
@@ -11,7 +12,6 @@ const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
         assetSubType: '',
         assetStatus: '',
         location: '',
-        coordinates: '',
         installationDate: '',
         quantity: '',
         cleaningIntervalInDays: '',
@@ -19,6 +19,7 @@ const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
     });
 
     const [originalData, setOriginalData] = useState({});
+    const [coordinates, setCoordinates] = useState([31.9632, 35.9304]); // Default coordinates if not provided
 
     useEffect(() => {
         if (selectedAsset) {
@@ -29,13 +30,6 @@ const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
                 assetSubType: selectedAsset.assetSubType || '',
                 assetStatus: selectedAsset.assetStatus || '',
                 location: selectedAsset.location || '',
-                coordinates: Array.isArray(selectedAsset.coordinates)
-                    ? selectedAsset.coordinates.join(',')
-                    : typeof selectedAsset.coordinates === 'object' && selectedAsset.coordinates !== null
-                        ? Object.values(selectedAsset.coordinates).join(',')
-                        : typeof selectedAsset.coordinates === 'string'
-                            ? selectedAsset.coordinates
-                            : '',
                 installationDate: selectedAsset.installationDate
                     ? new Date(selectedAsset.installationDate).toISOString().split('T')[0]
                     : '',
@@ -46,6 +40,11 @@ const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
 
             setFormData(assetData);
             setOriginalData(assetData); // Set original data for comparison
+
+            // Check if coordinates exist and parse them
+            if (selectedAsset.coordinates && selectedAsset.coordinates.lat && selectedAsset.coordinates.long) {
+                setCoordinates([selectedAsset.coordinates.lat, selectedAsset.coordinates.long]);
+            }
         }
     }, [selectedAsset]);
 
@@ -57,6 +56,10 @@ const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
         }));
     };
 
+    const handleLocationChange = ({ lat, lng }) => {
+        setCoordinates([lat, lng]); // Update the coordinates state when the location is changed on the map
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -66,16 +69,17 @@ const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
         Object.entries(formData).forEach(([key, value]) => {
             if (value !== originalData[key]) { // Only send if changed
                 if (value !== '' && value !== null && value !== undefined) {
-                    if (key === 'coordinates') {
-                        cleanedData[key] = value.split(',').map(coord => parseFloat(coord.trim()));
-                    } else {
-                        cleanedData[key] = value;
-                    }
+                    cleanedData[key] = value;
                 }
             }
         });
 
-        console.log('Modified Data: ', cleanedData);
+        if (coordinates) {
+            cleanedData.coordinates = {
+                lat: coordinates[0],
+                long: coordinates[1],
+            };
+        }
 
         if (Object.keys(cleanedData).length === 0) {
             toast.warning('No changes made to update.', { position: "top-right" });
@@ -129,9 +133,12 @@ const EditAssetModal = ({ show, handleClose, fetchData, selectedAsset }) => {
                             <Form.Label>Location</Form.Label>
                             <Form.Control name="location" value={formData.location} onChange={handleChange} />
                         </div>
-                        <div className="col-md-6 mb-3">
-                            <Form.Label>Coordinates (lat,lng)</Form.Label>
-                            <Form.Control name="coordinates" value={formData.coordinates} onChange={handleChange} />
+                        <div className="col-md-12 mb-3">
+                            <Form.Label>Select Location on Map</Form.Label>
+                            <LocationPickerMap
+                                onLocationSelect={handleLocationChange} // Pass the function to handle location change
+                                initialPosition={coordinates} // Pass the initial coordinates to show on the map
+                            />
                         </div>
                         <div className="col-md-6 mb-3">
                             <Form.Label>Installation Date</Form.Label>

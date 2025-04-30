@@ -7,13 +7,11 @@ const ticketSchema = new mongoose.Schema({
     },
     openedBy: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
         refPath: 'openedByModel',
     },
     openedByModel: {
         type: String,
         enum: ['Tech', 'Admin'],
-        required: true,
     },
     assignedTo: {
         type: mongoose.Schema.Types.ObjectId,

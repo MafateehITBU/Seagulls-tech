@@ -8,21 +8,69 @@ const AssetDetailsLayer = () => {
     const [asset, setAsset] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [accidentTickets, setAccidentTickets] = useState([]);
+    const [cleaningTickets, setCleaningTickets] = useState([]);
+    const [maintTickets, setMaintTickets] = useState([]);
 
     useEffect(() => {
-        const fetchAsset = async () => {
-            try {
-                const res = await axiosInstance.get(`/asset/${id}`);
-                setAsset(res.data);
-                setLoading(false);
-            } catch (err) {
-                setError(err.response?.data?.message || "Failed to fetch asset");
-                setLoading(false);
-            }
-        };
-
         fetchAsset();
+        fetchAccientTickets();
+        fetchCleaningTickets();
+        fetchMaintTickets();
     }, [id]);
+
+    const fetchAsset = async () => {
+        try {
+            const res = await axiosInstance.get(`/asset/${id}`);
+            setAsset(res.data);
+            setLoading(false);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to fetch asset");
+            setLoading(false);
+        }
+    };
+
+    const fetchAccientTickets = async () => {
+        try {
+            const res = await axiosInstance.get("/ticket/accident-tickets");
+            const filtered = res.data.filter(ticket =>
+                (!ticket.ticketId.assignedTo) &&
+                (ticket.ticketId.assetId?._id === id)
+            );
+            setAccidentTickets(filtered);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to fetch accident tickets");
+            setLoading(false);
+        }
+    };
+
+    const fetchCleaningTickets = async () => {
+        try {
+            const res = await axiosInstance.get("/ticket/cleaning-tickets");
+            const filtered = res.data.filter(ticket =>
+                (!ticket.ticketId.assignedTo) &&
+                (ticket.ticketId.assetId?._id === id)
+            );
+            setCleaningTickets(filtered);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to fetch cleaning tickets");
+            setLoading(false);
+        }
+    };
+
+    const fetchMaintTickets = async () => {
+        try {
+            const res = await axiosInstance.get("/ticket/maintenance-tickets");
+            const filtered = res.data.filter(ticket =>
+                (!ticket.ticketId.assignedTo) &&
+                (ticket.ticketId.assetId?._id === id)
+            );
+            setMaintTickets(filtered);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to fetch maintenance tickets");
+            setLoading(false);
+        }
+    };
 
     const formatDate = (date) => {
         return date ? new Date(date).toLocaleDateString() : 'N/A';
@@ -47,52 +95,59 @@ const AssetDetailsLayer = () => {
     return (
         <div className="p-6 bg-white rounded-lg shadow-md d-flex flex-column">
             <h2 className="text-2xl font-bold my-3 align-self-center">Asset Information</h2>
-            <Table striped bordered hover responsive>
+            <Table
+                striped
+                bordered
+                hover
+                responsive
+                className="mx-auto" // Center the table horizontally
+                style={{ maxWidth: '1000px' }}
+            >
                 <tbody>
                     <tr>
-                        <td><strong>Asset No</strong></td>
-                        <td>{asset.assetNo || 'N/A'}</td>
+                        <td className="text-center"><strong>Asset No</strong></td>
+                        <td className="text-center">{asset.assetNo || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td><strong>Asset Name</strong></td>
-                        <td>{asset.assetName || 'N/A'}</td>
+                        <td className="text-center"><strong>Asset Name</strong></td>
+                        <td className="text-center">{asset.assetName || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td><strong>Type</strong></td>
-                        <td>{asset.assetType || 'N/A'}</td>
+                        <td className="text-center"><strong>Type</strong></td>
+                        <td className="text-center">{asset.assetType || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td><strong>Sub-Type</strong></td>
-                        <td>{asset.assetSubType || 'N/A'}</td>
+                        <td className="text-center"><strong>Sub-Type</strong></td>
+                        <td className="text-center">{asset.assetSubType || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td><strong>Status</strong></td>
-                        <td>{asset.assetStatus || 'N/A'}</td>
+                        <td className="text-center"><strong>Status</strong></td>
+                        <td className="text-center">{asset.assetStatus || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td><strong>Location</strong></td>
-                        <td>{asset.location || 'N/A'}</td>
+                        <td className="text-center"><strong>Location</strong></td>
+                        <td className="text-center">{asset.location || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td><strong>Installation Date</strong></td>
-                        <td>{formatDate(asset.installationDate)}</td>
+                        <td className="text-center"><strong>Installation Date</strong></td>
+                        <td className="text-center">{formatDate(asset.installationDate)}</td>
                     </tr>
                     <tr>
-                        <td><strong>Quantity</strong></td>
-                        <td>{asset.quantity || 'N/A'}</td>
+                        <td className="text-center"><strong>Quantity</strong></td>
+                        <td className="text-center">{asset.quantity || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td><strong>Next Cleaning Date</strong></td>
-                        <td>{formatDate(asset.cleaningSchedule?.nextCleaningDate)}</td>
+                        <td className="text-center"><strong>Next Cleaning Date</strong></td>
+                        <td className="text-center">{formatDate(asset.cleaningSchedule?.nextCleaningDate)}</td>
                     </tr>
                     <tr>
-                        <td><strong>Next Maintenance Date</strong></td>
-                        <td>{formatDate(asset.maintenanceSchedule?.nextMaintenanceDate)}</td>
+                        <td className="text-center"><strong>Next Maintenance Date</strong></td>
+                        <td className="text-center">{formatDate(asset.maintenanceSchedule?.nextMaintenanceDate)}</td>
                     </tr>
                     {asset.photo && (
                         <tr>
-                            <td><strong>Photo</strong></td>
-                            <td>
+                            <td className="text-center"><strong>Photo</strong></td>
+                            <td className="text-center">
                                 <img
                                     src={asset.photo}
                                     alt="Asset"

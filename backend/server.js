@@ -2,6 +2,11 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cron from 'node-cron';
+import {
+  autoMaintenanceScheduler,
+  autoCleaningScheduler
+} from './utils/autoScheduler.js';
 
 import adminRoutes from './routes/adminRoutes.js';
 import techRoutes from './routes/techRoutes.js';
@@ -33,6 +38,13 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Seagulls Tech API' });
 });
 
+// Checks the nextMaintDate and nextCleaningDate for the assets every day at 6 AM
+cron.schedule('0 6 * * *', async () => {
+  console.log("[Cron] Running auto-maintenance scheduler...");
+  await autoMaintenanceScheduler();
+  console.log("[Cron] Running Auto-Cleaning...");
+  await autoCleaningScheduler();
+});
 
 app.use('/api/admin', adminRoutes); // Admin routes
 app.use('/api/tech', techRoutes); // Tech routes

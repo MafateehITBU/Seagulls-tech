@@ -4,6 +4,7 @@ import Accident from "../models/Accident.js";
 import Cleaning from "../models/Cleaning.js";
 import Asset from "../models/Asset.js";
 import SparePart from "../models/SparePart.js";
+import Tech from "../models/Tech.js";
 
 /**----------------------------------------
  * @desc Get the tickets that are closed and associated with the cleaning
@@ -384,3 +385,39 @@ export const closeTicket = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 }
+
+/**--------------------------------------
+ * @desc Get all Tech names and the no. of their closed tickets
+ * @route GET /api/ticket/tech
+ * @access Private
+ * @position admin, superadmin
+ ----------------------------------------*/
+export const getTechClosedTicketsNo = async (req, res) => {
+    try {
+        // Fetch all technicians
+        const allTechs = await Tech.find({}, 'name');
+
+        // Fetch all closed tickets with assigned tech populated
+        const closedTickets = await Ticket.find({ status: 'Closed' }).populate('assignedTo', 'name');
+
+        // Count closed tickets per techId
+        const closedCounts = {};
+        closedTickets.forEach(ticket => {
+            const techId = ticket.assignedTo?._id?.toString();
+            if (techId) {
+                closedCounts[techId] = (closedCounts[techId] || 0) + 1;
+            }
+        });
+
+        // Build result array with all techs
+        const result = allTechs.map(tech => ({
+            techName: tech.name,
+            closedTicketsCount: closedCounts[tech._id.toString()] || 0
+        }));
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Couldn't fetch the techs and their closed tickets count!" });
+    }
+};

@@ -8,7 +8,8 @@ import {
     getAccidentTickets,
     rejectTicket,
     approveTicket,
-    closeTicket
+    closeTicket,
+    getTechClosedTicketsNo
 } from '../controllers/ticketController.js';
 import verifyToken from "../middleware/verifyToken.js";
 import authorizePosition from "../middleware/authorizePosition.js";
@@ -23,5 +24,6 @@ router.get('/accident-tickets', verifyToken, authorizePosition('admin', 'superad
 router.post('/reject/:ticketId', verifyToken, authorizePosition('admin', 'superadmin'), rejectTicket); // Reject a ticket
 router.post('/approve/:ticketId', verifyToken, authorizePosition('admin', 'superadmin'), approveTicket); // Approve a ticket
 router.post('/close/:ticketId', verifyToken, authorizePosition('admin', 'superadmin'), closeTicket); // Close a ticket
+router.get('/tech', verifyToken, authorizePosition('admin', 'superadmin'), getTechClosedTicketsNo); // Get all Tech names and the no. of their closed tickets
 
 export default router;

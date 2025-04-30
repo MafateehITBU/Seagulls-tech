@@ -23,6 +23,7 @@ const AssetsLayer = () => {
     const [assets, setAssets] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState(null);
+    const [moreInfoAsset, setMoreInfoAsset] = useState(null);
     const [showQRModal, setShowQRModal] = useState(false); // QR modal state
     const [qrCode, setQRCode] = useState(null); // Store selected QR code
     const [selectedAssetEdit, setSelectedAssetEdit] = useState(null);
@@ -49,7 +50,7 @@ const AssetsLayer = () => {
         setShowDeleteModal(true);
     };
 
-    const closeModal = () => setSelectedAsset(null);
+    const closeModal = () => setMoreInfoAsset(null);
 
     const handleQRClick = (asset) => {
         setQRCode(asset.qrCode);  // Set the QR code image
@@ -148,7 +149,7 @@ const AssetsLayer = () => {
             Cell: ({ row }) => (
                 <button
                     className="btn btn-sm btn-warning"
-                    onClick={() => setSelectedAsset(row.original)}
+                    onClick={() => setMoreInfoAsset(row.original)}
                 >
                     More Info
                 </button>
@@ -160,7 +161,10 @@ const AssetsLayer = () => {
                 <div className="d-flex justify-content-center gap-2">
                     <button
                         className="btn btn-sm btn-primary"
-                        onClick={() => { setSelectedAssetEdit(row.original); }}
+                        onClick={() => {
+                            setSelectedAssetEdit(row.original);
+                            setEditModalShow(true);
+                        }}
                     >
                         <Icon icon="mdi:pencil" />
                     </button>
@@ -239,6 +243,37 @@ const AssetsLayer = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal for More Info */}
+            {moreInfoAsset && (
+                <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Asset Info</h5>
+                                <button type="button" className="btn-close" onClick={closeModal}></button>
+                            </div>
+                            <div className="modal-body d-flex flex-column">
+                                <p><strong>Location:</strong> {moreInfoAsset.location}</p>
+                                <p><strong>Installation Date:</strong> {new Date(moreInfoAsset.installationDate).toLocaleDateString()}</p>
+                                {moreInfoAsset.photo ? (
+                                    <img
+                                        src={moreInfoAsset.photo}
+                                        alt="Asset"
+                                        style={{ width: '400px', height: '50vh', borderRadius: '8px' }}
+                                        className='align-self-center'
+                                    />
+                                ) : (
+                                    <div>No photo available.</div>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={closeModal}>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* QR Code Modal */}
             {showQRModal && (
