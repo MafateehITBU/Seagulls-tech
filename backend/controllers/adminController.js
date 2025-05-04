@@ -193,11 +193,23 @@ export const updateAdminPassword = async (req, res) => {
             return res.status(404).json({ message: "Admin not found" });
         }
 
-        admin.password = newPassword; // hashing will happen automatically in pre-save
+        // Update password and increment token version
+        admin.password = newPassword;
+        admin.tokenVersion = (admin.tokenVersion || 0) + 1; // Increment token version
 
         await admin.save();
 
-        return res.status(200).json({ message: "Password updated successfully" });
+        // Clear all cookies
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+        });
+
+        return res.status(200).json({ 
+            message: "Password updated successfully. Please sign in again.",
+            signOut: true // Flag to indicate that user should be signed out
+        });
     } catch (error) {
         console.error('Password update error:', error);
         return res.status(500).json({ message: "Server error" });

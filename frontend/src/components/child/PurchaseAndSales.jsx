@@ -6,7 +6,7 @@ const PurchaseAndSales = () => {
   let { purchaseSaleChartOptions, purchaseSaleChartSeries } =
     useReactApexChart();
   return (
-    <div className='col-xxl-4 col-md-6'>
+    <div className='col-xxl-8 col-md-6'>
       <div className='card h-100'>
         <div className='card-header'>
           <div className='d-flex align-items-center flex-wrap gap-2 justify-content-between'>

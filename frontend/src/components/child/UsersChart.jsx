@@ -5,7 +5,7 @@ import axiosInstance from '../../axiosConfig';
 const UsersChart = () => {
   const [techs, setTechs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const MAX_DISPLAY_TECHS = 6; // Maximum number of technicians to display
+  const MAX_DISPLAY_TECHS = 7; // Maximum number of technicians to display
 
   useEffect(() => {
     const fetchTechs = async () => {
@@ -24,7 +24,7 @@ const UsersChart = () => {
 
   return (
     <div className='col-xxl-4 col-md-6'>
-      <div className='card'>
+      <div className='card h-100'>
         <div className='card-header border-bottom'>
           <div className='d-flex align-items-center flex-wrap gap-2 justify-content-between'>
             <h6 className='mb-2 fw-bold text-lg mb-0'>Technicians</h6>
@@ -76,9 +76,9 @@ const UsersChart = () => {
                       </span>
                     </div>
                   </div>
-                  <span className='text-success-main fw-medium text-md'>
+                  {/* <span className='text-success-main fw-medium text-md'>
                     Active
-                  </span>
+                  </span> */}
                 </div>
               ))
             )}

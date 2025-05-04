@@ -4,9 +4,11 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import axiosInstance from '../axiosConfig';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import Cookie from 'js-cookie';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePageLayer = () => {
-    const { user, loading, updateUser } = useAuth();
+    const { user, loading, updateUser, setUser } = useAuth();
     const [imagePreview, setImagePreview] = useState(user?.photo || 'assets/images/user-grid/user-grid-img13.png');
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
@@ -23,6 +25,15 @@ const ProfilePageLayer = () => {
         phone: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [passwordData, setPasswordData] = useState({
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [passwordErrors, setPasswordErrors] = useState({
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const navigate = useNavigate();
 
     // Toggle function for password field
     const togglePasswordVisibility = () => {
@@ -159,6 +170,126 @@ const ProfilePageLayer = () => {
             Swal.fire({
                 title: 'Error!',
                 text: error.response?.data?.message || 'Failed to update profile',
+                icon: 'error',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'OK'
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const validatePassword = (password) => {
+        // Password must be at least 8 characters long
+        // and contain at least one uppercase letter, one lowercase letter, one number, and one special character
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        return passwordRegex.test(password);
+    };
+
+    const validatePasswordForm = () => {
+        const newErrors = {
+            newPassword: '',
+            confirmPassword: ''
+        };
+
+        // New password validation
+        if (!passwordData.newPassword.trim()) {
+            newErrors.newPassword = 'New password is required';
+        } else if (!validatePassword(passwordData.newPassword)) {
+            newErrors.newPassword = 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character';
+        }
+
+        // Confirm password validation
+        if (!passwordData.confirmPassword.trim()) {
+            newErrors.confirmPassword = 'Please confirm your password';
+        } else if (passwordData.newPassword !== passwordData.confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match';
+        }
+
+        setPasswordErrors(newErrors);
+        return !Object.values(newErrors).some(error => error !== '');
+    };
+
+    const handlePasswordChange = (e) => {
+        const { name, value } = e.target;
+        setPasswordData(prev => ({ ...prev, [name]: value }));
+        
+        // Clear error when user starts typing
+        if (passwordErrors[name]) {
+            setPasswordErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!validatePasswordForm()) {
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: 'Change Password',
+            text: 'Are you sure you want to change your password? This will sign you out of all sessions.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, change it!',
+            cancelButtonText: 'No, cancel'
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const endpoint = user?.position === 'admin' || user?.position === 'superadmin'
+                ? `/admin/update-password/${user?.id}`
+                : `/tech/update-password/${user?.id}`;
+
+            const token = Cookie.get('token');
+            const response = await axiosInstance.put(endpoint, {
+                newPassword: passwordData.newPassword,
+                confirmPassword: passwordData.confirmPassword
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            if (response.data) {
+                await Swal.fire({
+                    title: 'Success!',
+                    text: response.data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                }).then(async (result) => {
+                    if (result.isConfirmed && response.data.signOut) {
+                        // Clear the token from cookies
+                        Cookie.remove('token');
+                        // Reset user state
+                        updateUser({
+                            id: null,
+                            position: null,
+                            name: null,
+                            email: null,
+                            photo: null,
+                            phone: null,
+                            bio: null
+                        });
+                        // Navigate to sign in page
+                        navigate('/signin');
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error changing password:', error);
+            await Swal.fire({
+                title: 'Error!',
+                text: error.response?.data?.message || 'Failed to change password',
                 icon: 'error',
                 confirmButtonColor: '#3085d6',
                 confirmButtonText: 'OK'
@@ -438,41 +569,89 @@ const ProfilePageLayer = () => {
                                 </form>
                             </div>
                             <div className="tab-pane fade" id="pills-change-passwork" role="tabpanel" aria-labelledby="pills-change-passwork-tab" tabIndex="0">
-                                <div className="mb-20">
-                                    <label htmlFor="your-password" className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        New Password <span className="text-danger-600">*</span>
-                                    </label>
-                                    <div className="position-relative">
-                                        <input
-                                            type={passwordVisible ? "text" : "password"}
-                                            className="form-control radius-8"
-                                            id="your-password"
-                                            placeholder="Enter New Password*"
-                                        />
-                                        <span
-                                            className={`toggle-password ${passwordVisible ? "ri-eye-off-line" : "ri-eye-line"} cursor-pointer position-absolute end-0 top-50 translate-middle-y me-16 text-secondary-light`}
-                                            onClick={togglePasswordVisibility}
-                                        ></span>
+                                <form onSubmit={handlePasswordSubmit}>
+                                    <div className="mb-20">
+                                        <label htmlFor="newPassword" className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                            New Password <span className="text-danger-600">*</span>
+                                        </label>
+                                        <div className="position-relative">
+                                            <input
+                                                type={passwordVisible ? "text" : "password"}
+                                                className={`form-control radius-8 ${passwordErrors.newPassword ? 'is-invalid' : ''}`}
+                                                id="newPassword"
+                                                name="newPassword"
+                                                value={passwordData.newPassword}
+                                                onChange={handlePasswordChange}
+                                                placeholder="Enter New Password*"
+                                            />
+                                            <span
+                                                className="toggle-password cursor-pointer position-absolute end-0 top-50 translate-middle-y me-16 text-secondary-light"
+                                                onClick={togglePasswordVisibility}
+                                            >
+                                                <Icon icon={passwordVisible ? 'mdi:eye-off' : 'mdi:eye'} />
+                                            </span>
+                                            {passwordErrors.newPassword && (
+                                                <div className="invalid-feedback">
+                                                    {passwordErrors.newPassword}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="mb-20">
-                                    <label htmlFor="confirm-password" className="form-label fw-semibold text-primary-light text-sm mb-8">
-                                        Confirm Password <span className="text-danger-600">*</span>
-                                    </label>
-                                    <div className="position-relative">
-                                        <input
-                                            type={confirmPasswordVisible ? "text" : "password"}
-                                            className="form-control radius-8"
-                                            id="confirm-password"
-                                            placeholder="Confirm Password*"
-                                        />
-                                        <span
-                                            className={`toggle-password ${confirmPasswordVisible ? "ri-eye-off-line" : "ri-eye-line"} cursor-pointer position-absolute end-0 top-50 translate-middle-y me-16 text-secondary-light`}
-                                            onClick={toggleConfirmPasswordVisibility}
-                                        ></span>
+                                    <div className="mb-20">
+                                        <label htmlFor="confirmPassword" className="form-label fw-semibold text-primary-light text-sm mb-8">
+                                            Confirm Password <span className="text-danger-600">*</span>
+                                        </label>
+                                        <div className="position-relative">
+                                            <input
+                                                type={confirmPasswordVisible ? "text" : "password"}
+                                                className={`form-control radius-8 ${passwordErrors.confirmPassword ? 'is-invalid' : ''}`}
+                                                id="confirmPassword"
+                                                name="confirmPassword"
+                                                value={passwordData.confirmPassword}
+                                                onChange={handlePasswordChange}
+                                                placeholder="Confirm Password*"
+                                            />
+                                            <span
+                                                className="toggle-password cursor-pointer position-absolute end-0 top-50 translate-middle-y me-16 text-secondary-light"
+                                                onClick={toggleConfirmPasswordVisibility}
+                                            >
+                                                <Icon icon={confirmPasswordVisible ? 'mdi:eye-off' : 'mdi:eye'} />
+                                            </span>
+                                            {passwordErrors.confirmPassword && (
+                                                <div className="invalid-feedback">
+                                                    {passwordErrors.confirmPassword}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+
+                                    <div className="d-flex align-items-center justify-content-center gap-3">
+                                        <button
+                                            type="button"
+                                            className="border border-danger-600 bg-hover-danger-200 text-danger-600 text-md px-56 py-11 radius-8"
+                                            onClick={() => {
+                                                setPasswordData({
+                                                    newPassword: '',
+                                                    confirmPassword: ''
+                                                });
+                                                setPasswordErrors({
+                                                    newPassword: '',
+                                                    confirmPassword: ''
+                                                });
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary border border-primary-600 text-md px-56 py-12 radius-8"
+                                            disabled={isSubmitting}
+                                        >
+                                            {isSubmitting ? 'Changing...' : 'Change Password'}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>

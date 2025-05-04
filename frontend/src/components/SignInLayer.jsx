@@ -2,6 +2,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { jwtDecode } from "jwt-decode";
 
 const SignInLayer = () => {
 
@@ -17,9 +18,10 @@ const SignInLayer = () => {
     setError("");
     try {
       const response = await login(email, password);
-      if (response.position === "admin" || response.position === "superadmin") {
+      const decoded = jwtDecode(response.token);
+      if (decoded.position === "admin" || decoded.position === "superadmin") {
         navigate("/");
-      } else if (response.position === "tech") {
+      } else if (decoded.position === "tech") {
         navigate("/tech/dashboard");
       }
     } catch (err) {
