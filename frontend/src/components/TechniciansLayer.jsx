@@ -11,10 +11,10 @@ import DeleteTechnicianModal from './modals/Tech/DeleteTechnicianModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-30"
+        className="form-control w-100"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search Vendor..."
+        placeholder="Search Technician..."
     />
 );
 
@@ -123,33 +123,39 @@ const TechniciansLayer = () => {
     return (
         <div className="card basic-data-table">
             <ToastContainer />
-            <div className="card-header d-flex justify-content-between align-items-center ">
+            <div className="card-header">
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <h5 className='card-title mb-0'>Technicians</h5>
 
-                <h5 className='card-title mb-0'>Technicians</h5>
-
-                <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
-                <button
-                    className="btn btn-success ml-3"
-                    onClick={handleAddTechnician}
-                >
-                    <Icon icon="mdi:plus" />
-                    Add New Technician
-                </button>
-
+                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 w-100 w-md-auto">
+                        <GlobalFilter 
+                            globalFilter={state.globalFilter} 
+                            setGlobalFilter={setGlobalFilter} 
+                            className="w-100 w-md-auto"
+                        />
+                        <button
+                            className="btn btn-success w-100 w-md-auto"
+                            onClick={handleAddTechnician}
+                        >
+                            <Icon icon="mdi:plus" />
+                            <span className="ms-1">Add New Technician</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div className="card-body">
+            <div className="card-body p-0">
                 {loading ? (
-                    <div className="text-center">Loading...</div>
+                    <div className="text-center p-4">Loading...</div>
                 ) : technicians.length === 0 ? (
-                    <div className="text-center">No technicians found</div>
+                    <div className="text-center p-4">No technicians found</div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
+                    <div className="table-responsive">
                         <table className="table bordered-table mb-0" {...getTableProps()}>
                             <thead>
                                 {headerGroups.map(headerGroup => (
                                     <tr {...headerGroup.getHeaderGroupProps()}>
                                         {headerGroup.headers.map(column => (
-                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center' }}>
+                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                                                 {column.render('Header')}
                                                 {' '}
                                                 {column.isSorted ? (
@@ -167,11 +173,14 @@ const TechniciansLayer = () => {
                                     prepareRow(row);
                                     return (
                                         <tr {...row.getRowProps()}>
-                                            {row.cells.map(cell => (
-                                                <td {...cell.getCellProps()} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                                                    {cell.render('Cell')}
-                                                </td>
-                                            ))}
+                                            {row.cells.map(cell => {
+                                                const { key, ...cellProps } = cell.getCellProps();
+                                                return (
+                                                    <td key={key} {...cellProps} style={{ textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                                                        {cell.render('Cell')}
+                                                    </td>
+                                                );
+                                            })}
                                         </tr>
                                     );
                                 })}

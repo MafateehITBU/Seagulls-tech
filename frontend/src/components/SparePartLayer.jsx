@@ -11,11 +11,10 @@ import DeleteModal from './modals/DeleteModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-25"
+        className="form-control w-100"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
         placeholder="Search spare parts..."
-        style={{ marginBottom: '15px' }}
     />
 );
 
@@ -142,27 +141,37 @@ const SparePartLayer = () => {
     return (
         <div className="card basic-data-table">
             <ToastContainer />
-            <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className='card-title mb-0'> Spare Parts</h5>
-                <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
-                <button
-                    className="btn btn-success ml-3"
-                    onClick={() => setShowModal(true)} // Show modal on button click
-                >
-                    + Create New Spare Part
-                </button>
+            <div className="card-header">
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <h5 className='card-title mb-0'>Spare Parts</h5>
+
+                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 w-100 w-md-auto">
+                        <GlobalFilter 
+                            globalFilter={state.globalFilter} 
+                            setGlobalFilter={setGlobalFilter} 
+                            className="w-100 w-md-auto"
+                        />
+                        <button
+                            className="btn btn-success w-100 w-md-auto"
+                            onClick={() => setShowModal(true)}
+                        >
+                            <Icon icon="mdi:plus" />
+                            <span className="ms-1">Create New Spare Part</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div className="card-body">
+            <div className="card-body p-0">
                 {spareParts.length === 0 ? (
-                    <div className="text-center">No spareParts found</div>
+                    <div className="text-center p-4">No spare parts found</div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
+                    <div className="table-responsive">
                         <table className="table bordered-table mb-0" {...getTableProps()}>
                             <thead>
                                 {headerGroups.map(headerGroup => (
                                     <tr {...headerGroup.getHeaderGroupProps()}>
                                         {headerGroup.headers.map(column => (
-                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center' }}>
+                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                                                 {column.render('Header')}
                                                 {' '}
                                                 {column.isSorted ? (
@@ -180,11 +189,14 @@ const SparePartLayer = () => {
                                     prepareRow(row);
                                     return (
                                         <tr {...row.getRowProps()}>
-                                            {row.cells.map(cell => (
-                                                <td {...cell.getCellProps()} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                                                    {cell.render('Cell')}
-                                                </td>
-                                            ))}
+                                            {row.cells.map(cell => {
+                                                const { key, ...cellProps } = cell.getCellProps();
+                                                return (
+                                                    <td key={key} {...cellProps} style={{ textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                                                        {cell.render('Cell')}
+                                                    </td>
+                                                );
+                                            })}
                                         </tr>
                                     );
                                 })}
@@ -197,7 +209,7 @@ const SparePartLayer = () => {
             {/* Modal for Photo*/}
             {selectedSparePart && (
                 <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog" role="document">
+                    <div className="modal-dialog modal-dialog-centered" role="document">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Spare Part Photo</h5>
@@ -208,7 +220,7 @@ const SparePartLayer = () => {
                                     <img
                                         src={selectedSparePart.photo}
                                         alt="Asset"
-                                        style={{ width: '400px', height: '50vh', borderRadius: '8px' }}
+                                        style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }}
                                         className='align-self-center'
                                     />
                                 ) : (

@@ -13,7 +13,7 @@ import DeleteModal from '../modals/DeleteModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-30"
+        className="form-control w-100"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
         placeholder="Search Accident Tickets..."
@@ -268,36 +268,43 @@ const AccidentLayer = () => {
     return (
         <div className="card basic-data-table">
             <ToastContainer />
-            <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className='card-title mb-0'>Accident Tickets</h5>
+            <div className="card-header">
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <h5 className='card-title mb-0'>Accident Tickets</h5>
 
-                <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
-                <button
-                    className="btn btn-success ml-3"
-                    onClick={() => setShowModal(true)} // Show modal on button click
-                >
-                    + Create New Ticket
-                </button>
-
+                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 w-100 w-md-auto">
+                        <GlobalFilter 
+                            globalFilter={state.globalFilter} 
+                            setGlobalFilter={setGlobalFilter} 
+                            className="w-100 w-md-auto"
+                        />
+                        <button
+                            className="btn btn-success w-100 w-md-auto"
+                            onClick={() => setShowModal(true)}
+                        >
+                            <Icon icon="mdi:plus" />
+                            <span className="ms-1">Create New Ticket</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div className="card-body">
+            <div className="card-body p-0">
                 {tickets.length === 0 ? (
-                    <div className="text-center">No tickets found</div>
+                    <div className="text-center p-4">No tickets found</div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
+                    <div className="table-responsive">
                         <table className="table bordered-table mb-0" {...getTableProps()}>
                             <thead>
                                 {headerGroups.map(headerGroup => (
                                     <tr {...headerGroup.getHeaderGroupProps()}>
                                         {headerGroup.headers.map(column => (
-                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center' }}>
+                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                                                 {column.render('Header')}
                                                 {' '}
                                                 {column.isSorted ? (
                                                     column.isSortedDesc ? <FaSortDown /> : <FaSortUp />
                                                 ) : (
-                                                    <FaSort style={{ opacity: 0.3 }}
-                                                    />
+                                                    <FaSort style={{ opacity: 0.3 }} />
                                                 )}
                                             </th>
                                         ))}
@@ -309,11 +316,14 @@ const AccidentLayer = () => {
                                     prepareRow(row);
                                     return (
                                         <tr {...row.getRowProps()}>
-                                            {row.cells.map(cell => (
-                                                <td {...cell.getCellProps()} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                                                    {cell.render('Cell')}
-                                                </td>
-                                            ))}
+                                            {row.cells.map(cell => {
+                                                const { key, ...cellProps } = cell.getCellProps();
+                                                return (
+                                                    <td key={key} {...cellProps} style={{ textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                                                        {cell.render('Cell')}
+                                                    </td>
+                                                );
+                                            })}
                                         </tr>
                                     );
                                 })}

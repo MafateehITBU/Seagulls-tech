@@ -11,7 +11,7 @@ import DeleteModal from './modals/DeleteModal.jsx';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-30"
+        className="form-control w-100"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
         placeholder="Search Vendor..."
@@ -109,27 +109,37 @@ const VendorLayer = () => {
     return (
         <div className="card basic-data-table">
             <ToastContainer />
-            <div className="card-header d-flex justify-content-between align-items-center">
-                <h5 className='card-title mb-0'> Vendors</h5>
-                <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
-                <button
-                    className="btn btn-success ml-3"
-                    onClick={() => setShowModal(true)} // Show modal on button click
-                >
-                    + Create New Vendor
-                </button>
+            <div className="card-header">
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <h5 className='card-title mb-0'>Vendors</h5>
+
+                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 w-100 w-md-auto">
+                        <GlobalFilter 
+                            globalFilter={state.globalFilter} 
+                            setGlobalFilter={setGlobalFilter} 
+                            className="w-100 w-md-auto"
+                        />
+                        <button
+                            className="btn btn-success w-100 w-md-auto"
+                            onClick={() => setShowModal(true)}
+                        >
+                            <Icon icon="mdi:plus" />
+                            <span className="ms-1">Create New Vendor</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div className="card-body">
+            <div className="card-body p-0">
                 {vendors.length === 0 ? (
-                    <div className="text-center">No vendors found</div>
+                    <div className="text-center p-4">No vendors found</div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
+                    <div className="table-responsive">
                         <table className="table bordered-table mb-0" {...getTableProps()}>
                             <thead>
                                 {headerGroups.map(headerGroup => (
                                     <tr {...headerGroup.getHeaderGroupProps()}>
                                         {headerGroup.headers.map(column => (
-                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center' }}>
+                                            <th {...column.getHeaderProps(column.getSortByToggleProps())} style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                                                 {column.render('Header')}
                                                 {' '}
                                                 {column.isSorted ? (
@@ -147,11 +157,14 @@ const VendorLayer = () => {
                                     prepareRow(row);
                                     return (
                                         <tr {...row.getRowProps()}>
-                                            {row.cells.map(cell => (
-                                                <td {...cell.getCellProps()} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                                                    {cell.render('Cell')}
-                                                </td>
-                                            ))}
+                                            {row.cells.map(cell => {
+                                                const { key, ...cellProps } = cell.getCellProps();
+                                                return (
+                                                    <td key={key} {...cellProps} style={{ textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                                                        {cell.render('Cell')}
+                                                    </td>
+                                                );
+                                            })}
                                         </tr>
                                     );
                                 })}
@@ -164,7 +177,7 @@ const VendorLayer = () => {
             {/* Modal for Spare Parts Provided by the vendor */}
             {selectedVendor && (
                 <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog" role="document">
+                    <div className="modal-dialog modal-dialog-centered" role="document">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h6 className="modal-title">Spare Parts Provided by {selectedVendor.name}</h6>
@@ -176,17 +189,17 @@ const VendorLayer = () => {
                                         <table className="table table-bordered text-center">
                                             <thead className="table-light">
                                                 <tr>
-                                                    <th className='text-center'>Part No</th>
-                                                    <th className='text-center'>Part Name</th>
-                                                    <th className='text-center'>Quantity</th>
+                                                    <th className='text-center' style={{ whiteSpace: 'nowrap' }}>Part No</th>
+                                                    <th className='text-center' style={{ whiteSpace: 'nowrap' }}>Part Name</th>
+                                                    <th className='text-center' style={{ whiteSpace: 'nowrap' }}>Quantity</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {selectedVendor.spareParts.map((part) => (
                                                     <tr key={part._id}>
-                                                        <td>{part.partNo || '-'}</td>
-                                                        <td>{part.partName || '-'}</td>
-                                                        <td>{part.quantity ?? '-'}</td>
+                                                        <td style={{ whiteSpace: 'nowrap' }}>{part.partNo || '-'}</td>
+                                                        <td style={{ whiteSpace: 'nowrap' }}>{part.partName || '-'}</td>
+                                                        <td style={{ whiteSpace: 'nowrap' }}>{part.quantity ?? '-'}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
