@@ -43,6 +43,10 @@ const ticketSchema = new mongoose.Schema({
         type: Boolean,
         default: null,
     },
+    techTicketApprove: {
+        type: Boolean,
+        default: false,
+    },
     status: {
         type: String,
         enum: ['Open', 'In Progress','Rejected', 'Closed'],

@@ -9,7 +9,9 @@ import {
     rejectTicket,
     approveTicket,
     closeTicket,
-    getTechClosedTicketsNo
+    getTechClosedTicketsNo,
+    getUnassignedTicketsWithType,
+    claimTicket
 } from '../controllers/ticketController.js';
 import verifyToken from "../middleware/verifyToken.js";
 import authorizePosition from "../middleware/authorizePosition.js";
@@ -25,5 +27,7 @@ router.post('/reject/:ticketId', verifyToken, authorizePosition('admin', 'supera
 router.post('/approve/:ticketId', verifyToken, authorizePosition('admin', 'superadmin'), approveTicket); // Approve a ticket
 router.post('/close/:ticketId', verifyToken, authorizePosition('admin', 'superadmin'), closeTicket); // Close a ticket
 router.get('/tech', verifyToken, authorizePosition('admin', 'superadmin'), getTechClosedTicketsNo); // Get all Tech names and the no. of their closed tickets
+router.get('/tech/unassigned', verifyToken, authorizePosition('tech'), getUnassignedTicketsWithType); // Get all unassigned tickets with their type
+router.put('/tech/claim/:ticketId', verifyToken, authorizePosition('tech'), claimTicket); // Claim a ticket by Tech
 
 export default router;

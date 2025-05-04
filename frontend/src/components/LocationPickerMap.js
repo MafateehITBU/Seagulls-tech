@@ -37,10 +37,20 @@ const SearchControl = ({ provider }) => {
     return null;
 };
 
+// ✅ This makes the map re-center when initialPosition changes
+const RecenterMap = ({ position }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (position) {
+            map.setView(position, map.getZoom());
+        }
+    }, [position]);
+    return null;
+};
+
 const LocationPickerMap = ({ initialPosition, onLocationSelect }) => {
     const [marker, setMarker] = useState(initialPosition);
 
-    // Update marker position when initialPosition prop changes
     useEffect(() => {
         if (initialPosition) {
             setMarker(initialPosition);
@@ -64,9 +74,12 @@ const LocationPickerMap = ({ initialPosition, onLocationSelect }) => {
             <SearchControl provider={new OpenStreetMapProvider()} />
             <MapClickHandler />
             {marker && (
-                <Marker position={marker}>
-                    <Popup>Selected Location</Popup>
-                </Marker>
+                <>
+                    <Marker position={marker}>
+                        <Popup>Selected Location</Popup>
+                    </Marker>
+                    <RecenterMap position={marker} /> {/* to re-center */}
+                </>
             )}
         </MapContainer>
     );

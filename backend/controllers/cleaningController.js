@@ -31,6 +31,7 @@ export const createCleaningTicket = async (req, res) => {
             return res.status(404).json({ message: "Asset not found" });
         }
 
+        let techTicketApprove = false;
         // check if the openedBy exists in the database
         if (openedByModel === 'Tech') {
             const tech = await Tech.findById(openedBy);
@@ -39,6 +40,7 @@ export const createCleaningTicket = async (req, res) => {
             }
         } else if (openedByModel === 'Admin') {
             const admin = await Admin.findById(openedBy);
+            techTicketApprove = true;
             if (!admin) {
                 return res.status(404).json({ message: "Admin not found" });
             }
@@ -66,7 +68,8 @@ export const createCleaningTicket = async (req, res) => {
             assignedTo,
             priority,
             assetId,
-            description,
+            description: description || "No description provided",
+            techTicketApprove,
         });
         const createdTicket = await ticket.save();
 
@@ -81,6 +84,39 @@ export const createCleaningTicket = async (req, res) => {
         // Return the created ticket
         res.status(201).json({ message: "Cleaning Ticket Created", ticket: createdTicket, cleaning: createdCleaning });
 
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+/**-------------------------------------------
+ * @desc Appove tech ticket
+ * @route PUT /api/cleaning/approve/:cleaningId
+ * @access Private
+ *  @role Admin, Super Admin
+ -------------------------------------------*/
+ export const approveTechTicket = async (req, res) => {
+    try {
+        const cleaningId = req.params.cleaningId;
+
+        // check if the cleaning ticket exists
+        const cleaning = await Cleaning.findById(cleaningId);
+        if (!cleaning) {
+            return res.status(404).json({ message: "Cleaning ticket not found" });
+        }
+
+        // get the ticketId from the cleaning ticket
+        const ticketId = cleaning.ticketId;
+        // check if the ticket exists
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ message: "Ticket not found" });
+        }
+
+        ticket.techTicketApprove = true;
+        await ticket.save();
+        res.json({ message: "Cleaning Ticket approved successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -107,7 +143,7 @@ export const getCleaningTicketsByTech = async (req, res) => {
         const cleanings = await Cleaning.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
+                select: 'openedBy assignedTo priority assetId description status openedByModel startTime endTime timer',
                 populate: [
                     {
                         path: 'openedBy',
@@ -119,7 +155,7 @@ export const getCleaningTicketsByTech = async (req, res) => {
                     },
                     {
                         path: 'assetId',
-                        select: 'name',
+                        select: 'assetName assetNo assetType location coordinates',
                     },
                 ],
             });
@@ -144,97 +180,6 @@ export const getCleaningTicketsByTech = async (req, res) => {
         }));
 
         res.json(populatedCleanings);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-/**------------------------------------------
- * @desc Get all cleaning records where the associated ticket is not assigned to anyone
- * @route GET /api/cleaning/unassigned
- * @access Private
- * @role Tech, Admin, Super Admin
- -------------------------------------------*/
-export const getEveryoneTicket = async (req, res) => {
-    try {
-        // Fetch all cleaning records
-        const cleanings = await Cleaning.find()
-            .populate({
-                path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
-                populate: [
-                    {
-                        path: 'openedBy',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assignedTo',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assetId',
-                        select: 'assetName',
-                    },
-                ],
-            });
-
-        if (!cleanings || cleanings.length === 0) {
-            return res.status(404).json({ message: "No cleaning records found" });
-        }
-
-        // Filter the cleaning records where the associated ticket's assignedTo is null or empty
-        const unassignedcleanings = cleanings.filter(cleaning => {
-            const assignedTo = cleaning.ticketId?.assignedTo;
-            return !assignedTo; // If assignedTo is null or doesn't exist, include this cleaning record
-        });
-
-        if (unassignedcleanings.length === 0) {
-            return res.status(404).json({ message: "No unassigned cleaning records found" });
-        }
-
-        res.status(200).json(unassignedcleanings);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-/**------------------------------------------
- * @desc Claim a ticket (assign it to the logged-in user)
- * @route PUT /api/cleaning/claim/:id
- * @access Private
- * @role Tech
- -------------------------------------------*/
-export const claimTicket = async (req, res) => {
-    try {
-        const cleaningId = req.params.cleaningId;
-        const userId = req.user.id;
-
-        // Check if the cleaning ticket exists
-        const cleaning = await Cleaning.findById(cleaningId);
-        if (!cleaning) {
-            return res.status(404).json({ message: "cleaning ticket not found" });
-        }
-
-        const ticketId = cleaning.ticketId;
-
-        // Check if the ticket exists
-        const ticket = await Ticket.findById(ticketId);
-        if (!ticket) {
-            return res.status(404).json({ message: "Ticket not found" });
-        }
-
-        // Check if the ticket is already assigned
-        if (ticket.assignedTo) {
-            return res.status(400).json({ message: "Ticket is already assigned to someone else" });
-        }
-
-        // Update the ticket's assignedTo field
-        ticket.assignedTo = userId;
-        await ticket.save();
-
-        res.status(200).json({ message: "Ticket claimed successfully", ticket });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -353,11 +298,6 @@ export const closeCleaning = async (req, res) => {
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
             return res.status(404).json({ message: "Ticket not found" });
-        }
-
-        // check if the ticket is approved
-        if (!ticket.approved) {
-            return res.status(400).json({ message: "Ticket not approved yet" });
         }
 
         cleaning.status = 'Closed';

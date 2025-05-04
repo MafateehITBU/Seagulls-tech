@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useTable, useGlobalFilter, useSortBy } from 'react-table';
+import { useTable, useGlobalFilter, useSortBy, usePagination } from 'react-table';
 import { Icon } from '@iconify/react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import axiosInstance from "../../axiosConfig";
@@ -39,7 +39,8 @@ const AccidentLayer = () => {
     const fetchData = async () => {
         try {
             const response = await axiosInstance.get('/ticket/accident-tickets');
-            setTickets(response.data);
+            const filtered = response.data.filter(ticket => ticket.ticketId?.techTicketApprove === true);
+            setTickets(filtered);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -259,11 +260,18 @@ const AccidentLayer = () => {
         getTableProps,
         getTableBodyProps,
         headerGroups,
-        rows,
+        page,
+        pageOptions,
+        state: { pageIndex, globalFilter },
         prepareRow,
         setGlobalFilter,
-        state,
-    } = useTable({ columns, data: tickets }, useGlobalFilter, useSortBy);
+        gotoPage,
+    } = useTable(
+        { columns, data: tickets, initialState: { pageSize: 5 } },
+        useGlobalFilter,
+        useSortBy,
+        usePagination
+    );
 
     return (
         <div className="card basic-data-table">
@@ -274,7 +282,7 @@ const AccidentLayer = () => {
 
                     <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 w-100 w-md-auto">
                         <GlobalFilter 
-                            globalFilter={state.globalFilter} 
+                            globalFilter={globalFilter} 
                             setGlobalFilter={setGlobalFilter} 
                             className="w-100 w-md-auto"
                         />
@@ -312,7 +320,7 @@ const AccidentLayer = () => {
                                 ))}
                             </thead>
                             <tbody {...getTableBodyProps()}>
-                                {rows.map(row => {
+                                {page.map(row => {
                                     prepareRow(row);
                                     return (
                                         <tr {...row.getRowProps()}>
@@ -331,6 +339,23 @@ const AccidentLayer = () => {
                         </table>
                     </div>
                 )}
+            </div>
+
+            <div className="d-flex justify-content-between align-items-center my-3 mx-5">
+                <span>
+                    Page <strong>{pageIndex + 1} of {pageOptions.length}</strong>
+                </span>
+                <div>
+                    {pageOptions.map((option, index) => (
+                        <button
+                            key={index}
+                            className={`btn btn-sm me-2 ${pageIndex === index ? 'btn-primary' : 'btn-outline-secondary'}`}
+                            onClick={() => gotoPage(index)}
+                        >
+                            {index + 1}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Reject Reason Modal */}

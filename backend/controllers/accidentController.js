@@ -26,12 +26,14 @@ export const createAccidentTicket = async (req, res) => {
             return res.status(400).json({ message: "Please fill all required fields" });
         }
 
+        let techTicketApprove = false;
         // Validate the opener
         if (openedByModel === 'Tech') {
             const tech = await Tech.findById(openedBy);
             if (!tech) return res.status(400).json({ message: "Invalid Tech ID" });
         } else if (openedByModel === 'Admin') {
             const admin = await Admin.findById(openedBy);
+            techTicketApprove = true;
             if (!admin) return res.status(400).json({ message: "Invalid Admin ID" });
         }
 
@@ -70,6 +72,7 @@ export const createAccidentTicket = async (req, res) => {
             priority,
             assetId,
             description: description || "No description provided",
+            techTicketApprove,
         });
 
         const createdTicket = await newTicket.save();
@@ -99,6 +102,39 @@ export const createAccidentTicket = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+/**-------------------------------------------
+ * @desc Appove tech ticket
+ * @route PUT /api/accident/approve/:accidentId
+ * @access Private
+ *  @role Admin, Super Admin
+ -------------------------------------------*/
+export const approveTechTicket = async (req, res) => {
+    try {
+        const accidentId = req.params.accidentId;
+
+        // check if the accident ticket exists
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
+        }
+
+        // get the ticketId from the accident ticket
+        const ticketId = accident.ticketId;
+        // check if the ticket exists
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ message: "Ticket not found" });
+        }
+
+        ticket.techTicketApprove = true;
+        await ticket.save();
+        res.json({ message: "Accident Ticket approved successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
 
 /**------------------------------------------
  * @desc Get all Open and In Progress accident tickets assigned to the logged-in Tech
@@ -157,97 +193,6 @@ export const getAccidentTicketsTech = async (req, res) => {
         }));
 
         res.json(populatedAccidents);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-/**------------------------------------------
- * @desc Get all accident records where the associated ticket is not assigned to anyone
- * @route GET /api/accident/unassigned
- * @access Private
- * @role Tech, Admin, Super Admin
- -------------------------------------------*/
-export const getEveryoneTicket = async (req, res) => {
-    try {
-        // Fetch all accident records
-        const accidents = await Accident.find()
-            .populate({
-                path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
-                populate: [
-                    {
-                        path: 'openedBy',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assignedTo',
-                        select: 'name',
-                    },
-                    {
-                        path: 'assetId',
-                        select: 'assetName',
-                    },
-                ],
-            });
-
-        if (!accidents || accidents.length === 0) {
-            return res.status(404).json({ message: "No accident records found" });
-        }
-
-        // Filter the accident records where the associated ticket's assignedTo is null or empty
-        const unassignedAccidents = accidents.filter(accident => {
-            const assignedTo = accident.ticketId?.assignedTo;
-            return !assignedTo; // If assignedTo is null or doesn't exist, include this accident record
-        });
-
-        if (unassignedAccidents.length === 0) {
-            return res.status(404).json({ message: "No unassigned accident records found" });
-        }
-
-        res.status(200).json(unassignedAccidents);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-/**------------------------------------------
- * @desc Claim a ticket (assign it to the logged-in user)
- * @route PUT /api/accident/claim/:id
- * @access Private
- * @role Tech
- -------------------------------------------*/
-export const claimTicket = async (req, res) => {
-    try {
-        const accidentId = req.params.accidentId;
-        const userId = req.user.id;
-
-        // Check if the accident ticket exists
-        const accident = await Accident.findById(accidentId);
-        if (!accident) {
-            return res.status(404).json({ message: "Accident ticket not found" });
-        }
-
-        const ticketId = accident.ticketId;
-
-        // Check if the ticket exists
-        const ticket = await Ticket.findById(ticketId);
-        if (!ticket) {
-            return res.status(404).json({ message: "Ticket not found" });
-        }
-
-        // Check if the ticket is already assigned
-        if (ticket.assignedTo) {
-            return res.status(400).json({ message: "Ticket is already assigned to someone else" });
-        }
-
-        // Update the ticket's assignedTo field
-        ticket.assignedTo = userId;
-        await ticket.save();
-
-        res.status(200).json({ message: "Ticket claimed successfully", ticket });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -505,7 +450,7 @@ export const closeAccident = async (req, res) => {
         if (!ticket.approved) {
             return res.status(400).json({ message: "Ticket not approved, you can't close it yet." });
         }
-        
+
         accident.status = 'Closed';
         await accident.save();
 

@@ -1,9 +1,8 @@
 import express from 'express';
 import {
     createCleaningTicket,
+    approveTechTicket,
     getCleaningTicketsByTech,
-    getEveryoneTicket,
-    claimTicket,
     addReportToCleaning,
     startCleaning,
     closeCleaning,
@@ -16,8 +15,6 @@ import authorizePosition from "../middleware/authorizePosition.js";
 const router = express.Router();
 router.post('/', verifyToken, createCleaningTicket); // Create a new cleaning ticket
 router.get('/tech', verifyToken, authorizePosition('tech'), getCleaningTicketsByTech); // Get all cleaning tickets assigned to a specific tech
-router.get('/everyone', verifyToken, authorizePosition('tech'), getEveryoneTicket); // Get all cleaning tickets for everyone
-router.post('/claim/:cleaningId', verifyToken, authorizePosition('tech'), claimTicket); // Claim a cleaning ticket
 router.post
     (
         '/tech/:cleaningId',
@@ -28,6 +25,7 @@ router.post
         ]),
         addReportToCleaning
     ); // Add a report to a cleaning ticket
+router.put('/approve/:cleaningId', verifyToken, authorizePosition('admin', 'superadmin'), approveTechTicket); // Approve Tickets Created by Tech
 router.post('/tech/start/:cleaningId', verifyToken, authorizePosition('tech'), startCleaning); // Start cleaning ticket
 router.post('/tech/close/:cleaningId', verifyToken, authorizePosition('tech'), closeCleaning); // Close cleaning ticket
 router.delete('/:cleaningId', verifyToken, authorizePosition('admin', 'superadmin'), deleteCleaning); // Delete a cleaning ticket

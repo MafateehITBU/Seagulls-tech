@@ -133,173 +133,254 @@ const MasterLayout = ({ children }) => {
         </div>
         <div className='sidebar-menu-area'>
           <ul className='sidebar-menu' id='sidebar-menu'>
-            <li>
-              <NavLink
-                to='/'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='line-md:home-simple-twotone'
-                  className='menu-icon'
-                />
-                <span>Dashboard</span>
-              </NavLink>
-            </li>
-            {/* Tickets */}
-            <li className='dropdown mt-2'>
-              <Link to='#'>
-                <Icon icon='hugeicons:invoice-03' className='menu-icon' />
-                <span>Tickets</span>
-              </Link>
-              <ul className='sidebar-submenu'>
+            {(user?.position === 'admin' || user?.position === 'superadmin') && (
+              <>
+                {/* Dashboard */}
+                <li>
+                  <NavLink
+                    to='/'
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
+                  >
+                    <Icon
+                      icon='line-md:home-simple-twotone'
+                      className='menu-icon'
+                    />
+                    <span>Dashboard</span>
+                  </NavLink>
+                </li>
+                {/* Tickets */}
+                <li className='dropdown mt-2'>
+                  <Link to='#'>
+                    <Icon icon='hugeicons:invoice-03' className='menu-icon' />
+                    <span>Tickets</span>
+                  </Link>
+                  <ul className='sidebar-submenu'>
+                    <li>
+                      <NavLink
+                        to='/accident'
+                        className={(navData) =>
+                          navData.isActive ? "active-page" : ""
+                        }
+                      >
+                        <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
+                        Accident
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to='/cleaning'
+                        className={(navData) =>
+                          navData.isActive ? "active-page" : ""
+                        }
+                      >
+                        <i className='ri-circle-fill circle-icon text-warning-main w-auto' />
+                        Cleaning
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to='/maintenance'
+                        className={(navData) =>
+                          navData.isActive ? "active-page" : ""
+                        }
+                      >
+                        <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
+                        Maintenance
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to='/admin/tech-tickets'
+                        className={(navData) =>
+                          navData.isActive ? "active-page" : ""
+                        }
+                      >
+                        <i className='ri-circle-fill circle-icon text-danger-main w-auto' />{" "}
+                        Opened by Technician
+                      </NavLink>
+                    </li>
+                  </ul>
+                </li>
+
+                {/* Archive */}
+                <li className='dropdown mt-2'>
+                  <Link to='#'>
+                    <Icon icon='line-md:folder-twotone' className='menu-icon' />
+                    <span>Archive</span>
+                  </Link>
+                  <ul className='sidebar-submenu'>
+                    <li>
+                      <NavLink
+                        to='/admin/closed-accident'
+                        className={(navData) =>
+                          navData.isActive ? "active-page" : ""
+                        }
+                      >
+                        <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />
+                        Accident
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to='/admin/closed-cleaning'
+                        className={(navData) =>
+                          navData.isActive ? "active-page" : ""
+                        }
+                      >
+                        <i className='ri-circle-fill circle-icon text-warning-main w-auto' />
+                        Cleaning
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink
+                        to='/admin/closed-maintenance'
+                        className={(navData) =>
+                          navData.isActive ? "active-page" : ""
+                        }
+                      >
+                        <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
+                        Maintenance
+                      </NavLink>
+                    </li>
+
+                  </ul>
+                </li>
+
+                {/* Assets */}
+                <li>
+                  <NavLink
+                    to='/admin/assets'
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
+                  >
+                    <Icon
+                      icon='line-md:clipboard-list-twotone'
+                      className='menu-icon'
+                    />
+                    <span>Assets</span>
+                  </NavLink>
+                </li>
+
+                {/* Vendors */}
+                <li>
+                  <NavLink
+                    to='/admin/vendors'
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
+                  >
+                    <Icon
+                      icon='line-md:home-md-twotone'
+                      className='menu-icon'
+                    />
+                    <span>Vendors</span>
+                  </NavLink>
+                </li>
+
+                {/* Spare Parts */}
+                <li>
+                  <NavLink
+                    to='/admin/spare-parts'
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
+                  >
+                    <Icon
+                      icon='line-md:cog-loop'
+                      className='menu-icon'
+                    />
+                    <span>Spare Parts</span>
+                  </NavLink>
+                </li>
+
+                {/* Technicians */}
+                <li>
+                  <NavLink
+                    to='/technicians'
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
+                  >
+                    <Icon
+                      icon='line-md:account'
+                      className='menu-icon'
+                    />
+                    <span>Technicians</span>
+                  </NavLink>
+                </li>
+              </>
+            )}
+            {(user?.position === 'superadmin') && (
+              <>
+                {/* Admins */}
+                <li>
+                  <NavLink
+                    to='/admins'
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
+                  >
+                    <Icon
+                      icon='line-md:account'
+                      className='menu-icon'
+                    />
+                    <span>Admins</span>
+                  </NavLink>
+                </li>
+              </>
+            )}
+
+            {(user?.position === 'tech') && (
+              <>
+                {/* Dashboard */}
+                <li>
+                  <NavLink
+                    to='/tech/dashboard'
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
+                  >
+                    <Icon
+                      icon='line-md:home-simple-twotone'
+                      className='menu-icon'
+                    />
+                    <span>Dashboard</span>
+                  </NavLink>
+                </li>
+
+                {/* Accident */}
                 <li>
                   <NavLink
                     to='/accident'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
                   >
-                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />{" "}
-                    Accident
+                    <Icon
+                      icon='line-md:account'
+                      className='menu-icon'
+                    />
+                    <span>Accident Tickets</span>
                   </NavLink>
                 </li>
+
+                {/* Cleaning */}
                 <li>
                   <NavLink
                     to='/cleaning'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
                   >
-                    <i className='ri-circle-fill circle-icon text-warning-main w-auto' />
-                    Cleaning
+                    <Icon
+                      icon='line-md:account'
+                      className='menu-icon'
+                    />
+                    <span>Cleaning Tickets</span>
                   </NavLink>
                 </li>
+
+                {/* maintenance */}
                 <li>
                   <NavLink
                     to='/maintenance'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
                   >
-                    <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
-                    Maintenance
-                  </NavLink>
-                </li>
-              </ul>
-            </li>
-
-            {/* Archive */}
-            <li className='dropdown mt-2'>
-              <Link to='#'>
-                <Icon icon='line-md:folder-twotone' className='menu-icon' />
-                <span>Archive</span>
-              </Link>
-              <ul className='sidebar-submenu'>
-                <li>
-                  <NavLink
-                    to='/admin/closed-accident'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-primary-600 w-auto' />
-                    Accident
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to='/admin/closed-cleaning'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-warning-main w-auto' />
-                    Cleaning
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
-                    to='/admin/closed-maintenance'
-                    className={(navData) =>
-                      navData.isActive ? "active-page" : ""
-                    }
-                  >
-                    <i className='ri-circle-fill circle-icon text-info-main w-auto' />{" "}
-                    Maintenance
+                    <Icon
+                      icon='line-md:cog-loop'
+                      className='menu-icon'
+                    />
+                    <span>Maintenance Tickets</span>
                   </NavLink>
                 </li>
 
-              </ul>
-            </li>
-
-            {/* Assets */}
-            <li>
-              <NavLink
-                to='/admin/assets'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='line-md:clipboard-list-twotone'
-                  className='menu-icon'
-                />
-                <span>Assets</span>
-              </NavLink>
-            </li>
-
-            {/* Vendors */}
-            <li>
-              <NavLink
-                to='/admin/vendors'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='line-md:home-md-twotone'
-                  className='menu-icon'
-                />
-                <span>Vendors</span>
-              </NavLink>
-            </li>
-
-            {/* Spare Parts */}
-            <li>
-              <NavLink
-                to='/admin/spare-parts'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='line-md:cog-loop'
-                  className='menu-icon'
-                />
-                <span>Spare Parts</span>
-              </NavLink>
-            </li>
-
-            
-            <li>
-              <NavLink
-                to='/technicians'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='line-md:account'
-                  className='menu-icon'
-                />
-                <span>Technicians</span>
-              </NavLink>
-            </li>
-
-            <li>
-              <NavLink
-                to='/admins'
-                className={(navData) => (navData.isActive ? "active-page" : "")}
-              >
-                <Icon
-                  icon='line-md:account'
-                  className='menu-icon'
-                />
-                <span>Admins</span>
-              </NavLink>
-            </li>
+              </>
+            )}
           </ul>
         </div>
       </aside>
@@ -342,7 +423,7 @@ const MasterLayout = ({ children }) => {
                 {/* ThemeToggleButton */}
                 <ThemeToggleButton />
 
-              
+
                 <div className='dropdown'>
                   <button
                     className='has-indicator w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center'
@@ -384,96 +465,6 @@ const MasterLayout = ({ children }) => {
                             <p className='mb-0 text-sm text-secondary-light text-w-200-px'>
                               Your profile has been Verified. Your profile has
                               been Verified
-                            </p>
-                          </div>
-                        </div>
-                        <span className='text-sm text-secondary-light flex-shrink-0'>
-                          23 Mins ago
-                        </span>
-                      </Link>
-                      <Link
-                        to='#'
-                        className='px-24 py-12 d-flex align-items-start gap-3 mb-2 justify-content-between bg-neutral-50'
-                      >
-                        <div className='text-black hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'>
-                          <span className='w-44-px h-44-px bg-success-subtle text-success-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0'>
-                            <img
-                              src='assets/images/notification/profile-1.png'
-                              alt=''
-                            />
-                          </span>
-                          <div>
-                            <h6 className='text-md fw-semibold mb-4'>
-                              Ronald Richards
-                            </h6>
-                            <p className='mb-0 text-sm text-secondary-light text-w-200-px'>
-                              You can stitch between artboards
-                            </p>
-                          </div>
-                        </div>
-                        <span className='text-sm text-secondary-light flex-shrink-0'>
-                          23 Mins ago
-                        </span>
-                      </Link>
-                      <Link
-                        to='#'
-                        className='px-24 py-12 d-flex align-items-start gap-3 mb-2 justify-content-between'
-                      >
-                        <div className='text-black hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'>
-                          <span className='w-44-px h-44-px bg-info-subtle text-info-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0'>
-                            AM
-                          </span>
-                          <div>
-                            <h6 className='text-md fw-semibold mb-4'>
-                              Arlene McCoy
-                            </h6>
-                            <p className='mb-0 text-sm text-secondary-light text-w-200-px'>
-                              Invite you to prototyping
-                            </p>
-                          </div>
-                        </div>
-                        <span className='text-sm text-secondary-light flex-shrink-0'>
-                          23 Mins ago
-                        </span>
-                      </Link>
-                      <Link
-                        to='#'
-                        className='px-24 py-12 d-flex align-items-start gap-3 mb-2 justify-content-between bg-neutral-50'
-                      >
-                        <div className='text-black hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'>
-                          <span className='w-44-px h-44-px bg-success-subtle text-success-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0'>
-                            <img
-                              src='assets/images/notification/profile-2.png'
-                              alt=''
-                            />
-                          </span>
-                          <div>
-                            <h6 className='text-md fw-semibold mb-4'>
-                              Annette Black
-                            </h6>
-                            <p className='mb-0 text-sm text-secondary-light text-w-200-px'>
-                              Invite you to prototyping
-                            </p>
-                          </div>
-                        </div>
-                        <span className='text-sm text-secondary-light flex-shrink-0'>
-                          23 Mins ago
-                        </span>
-                      </Link>
-                      <Link
-                        to='#'
-                        className='px-24 py-12 d-flex align-items-start gap-3 mb-2 justify-content-between'
-                      >
-                        <div className='text-black hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'>
-                          <span className='w-44-px h-44-px bg-info-subtle text-info-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0'>
-                            DR
-                          </span>
-                          <div>
-                            <h6 className='text-md fw-semibold mb-4'>
-                              Darlene Robertson
-                            </h6>
-                            <p className='mb-0 text-sm text-secondary-light text-w-200-px'>
-                              Invite you to prototyping
                             </p>
                           </div>
                         </div>
@@ -568,7 +559,7 @@ const MasterLayout = ({ children }) => {
         {/* dashboard-main-body */}
         <div className='dashboard-main-body'>{children}</div>
       </main>
-    </section>
+    </section >
   );
 };
 

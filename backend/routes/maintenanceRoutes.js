@@ -1,9 +1,8 @@
 import express from 'express';
 import {
     createMaintenanceTicket,
+    approveTechTicket,
     getMaintTicketsTech,
-    getEveryoneTicket,
-    claimTicket,
     addReportToMaint,
     addRejectReportToMaint,
     startMaint,
@@ -17,8 +16,6 @@ import authorizePosition from "../middleware/authorizePosition.js";
 const router = express.Router();
 router.post('/', verifyToken, createMaintenanceTicket); // Create a new maintenance ticket
 router.get('/tech', verifyToken, authorizePosition('tech'), getMaintTicketsTech); // Get all maintenance tickets assigned to a specific tech
-router.get('/everyone', verifyToken, authorizePosition('tech'), getEveryoneTicket); // Get all maintenance tickets for everyone
-router.post('/claim/:maintId', verifyToken, authorizePosition('tech'), claimTicket); // Claim a maintenance ticket
 router.post
     (
         '/tech/:maintId',
@@ -39,6 +36,7 @@ router.post
         ]),
         addRejectReportToMaint
     ); // Add a reject report to a maintenance ticket
+router.put('/approve/:maintId', verifyToken, authorizePosition('admin', 'superadmin'), approveTechTicket); // Approve Tickets Created by Tech
 router.post('/tech/start/:maintId', verifyToken, authorizePosition('tech'), startMaint); // Start maintenance ticket
 router.post('/tech/close/:maintId', verifyToken, authorizePosition('tech'), closeMaint); // Close maintenance ticket
 router.delete('/:maintId', verifyToken, authorizePosition('admin', 'superadmin'), deleteMaint); // Delete a maintenance ticket

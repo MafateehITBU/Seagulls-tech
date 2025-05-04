@@ -2,7 +2,6 @@ import Ticket from "../models/Ticket.js";
 import Maintenance from "../models/Maintenance.js";
 import Accident from "../models/Accident.js";
 import Cleaning from "../models/Cleaning.js";
-import Asset from "../models/Asset.js";
 import SparePart from "../models/SparePart.js";
 import Tech from "../models/Tech.js";
 
@@ -421,3 +420,81 @@ export const getTechClosedTicketsNo = async (req, res) => {
         res.status(500).json({ message: "Couldn't fetch the techs and their closed tickets count!" });
     }
 };
+
+/**--------------------------------------
+ * @desc Get all unassigned tickets with their type (cleaning, maintenance, accident)
+ * @route GET /api/ticket/tech/unassigned
+ * @access Private
+ * @position tech
+ ----------------------------------------*/
+export const getUnassignedTicketsWithType = async (req, res) => {
+    try {
+        // Find all unassigned tickets
+        const unassignedTickets = await Ticket.find({ assignedTo: { $exists: false } })
+            .populate('assignedTo', 'name')
+            .populate('assetId', 'assetName coordinates location');
+
+        const ticketIds = unassignedTickets.map(ticket => ticket._id.toString());
+
+        // Find associated cleaning, maintenance, and accident records
+        const cleaningDocs = await Cleaning.find({ ticketId: { $in: ticketIds } }).select('ticketId');
+        const maintenanceDocs = await Maintenance.find({ ticketId: { $in: ticketIds } }).select('ticketId');
+        const accidentDocs = await Accident.find({ ticketId: { $in: ticketIds } }).select('ticketId');
+
+        const cleaningMap = new Set(cleaningDocs.map(doc => doc.ticketId.toString()));
+        const maintenanceMap = new Set(maintenanceDocs.map(doc => doc.ticketId.toString()));
+        const accidentMap = new Set(accidentDocs.map(doc => doc.ticketId.toString()));
+
+        // Add type to each ticket
+        const ticketsWithType = unassignedTickets.map(ticket => {
+            const id = ticket._id.toString();
+            let type = 'unknown';
+            if (cleaningMap.has(id)) type = 'cleaning';
+            else if (maintenanceMap.has(id)) type = 'maintenance';
+            else if (accidentMap.has(id)) type = 'accident';
+
+            return {
+                ...ticket.toObject(),
+                ticketType: type
+            };
+        });
+
+        res.status(200).json(ticketsWithType);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to fetch unassigned tickets with types" });
+    }
+};
+
+/**-------------------------------------
+ * @desc Claim a Ticket
+ * @route PUT /api/ticket/tech/claim/:ticketId
+ * @access Private
+ * @positiom tech
+ --------------------------------------*/
+export const claimTicket = async (req, res) => {
+    try {
+        const ticketId = req.params.ticketId;
+        const userId = req.user.id;
+
+        // Check if the ticket exists
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).json({ message: "Ticket not found" });
+        }
+
+        // Check if the ticket is already assigned
+        if (ticket.assignedTo) {
+            return res.status(400).json({ message: "Ticket is already assigned to someone else" });
+        }
+
+        // Update the ticket's assignedTo field
+        ticket.assignedTo = userId;
+        await ticket.save();
+
+        res.status(200).json({ message: "Ticket claimed successfully", ticket });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}

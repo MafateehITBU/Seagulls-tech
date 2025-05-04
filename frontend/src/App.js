@@ -16,6 +16,8 @@ import TechniciansPage from "./pages/TechniciansPage";
 import VendorPage from "./pages/VendorPage";
 import SparePartPage from "./pages/SaprePartPage";
 import AssetDetailsPage from "./pages/AssetDetailsPage";
+import HomePage from './pages/Technician/HomePage';
+import TechnicianTicketPage from "./pages/tickets/TechnicianTicketPage";
 
 import AdminsPage from "./pages/AdminsPage";
 function App() {
@@ -82,6 +84,15 @@ function App() {
 
         {/* Admin routes */}
         <Route
+          path="/admin/tech-tickets"
+          element={
+            <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
+              <TechnicianTicketPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/admin/closed-accident"
           element={
             <ProtectedRoute allowedPositions={['admin', 'superadmin']}>
@@ -140,7 +151,7 @@ function App() {
           path="/tech/dashboard"
           element={
             <ProtectedRoute allowedPositions={['tech']}>
-              {/* <TechDashboard /> */}
+              <HomePage />
             </ProtectedRoute>
           }
         />
@@ -148,9 +159,9 @@ function App() {
         <Route
           path="/asset-details/:id"
           element={
-            
-              <AssetDetailsPage />
-            
+
+            <AssetDetailsPage />
+
           }
         />
 
