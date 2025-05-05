@@ -17,7 +17,7 @@ import authorizePosition from "../middleware/authorizePosition.js";
 const router = express.Router();
 router.post('/', verifyToken, createAccidentTicket); // Create a new accident ticket
 router.get('/tech', verifyToken, authorizePosition('tech'), getAccidentTicketsTech); // Get all accident tickets assigned to a specific tech
-router.post('/start/:accidentId', verifyToken, authorizePosition('tech'), startAccident); // Start accident ticket
+router.post('/tech/start/:accidentId', verifyToken, authorizePosition('tech'), startAccident); // Start accident ticket
 router.post
     (
         '/tech/:accidentId',
@@ -39,8 +39,8 @@ router.post
         addRejectReportToAccident
     ); // Add a reject report to a accident ticket
 router.put('/approve/:accidentId', verifyToken, authorizePosition('admin', 'superadmin'), approveTechTicket); // Approve Tickets Created by Tech
-router.post('/croca/:accidentId', verifyToken, authorizePosition('tech'), upload.single('crocaPic'), addCrocaToAccident); // Add a croca to a accident ticket
-router.post('/close/:accidentId', verifyToken, authorizePosition('tech'), closeAccident); // Close accident ticket
+router.post('/tech/croca/:accidentId', verifyToken, authorizePosition('tech'), upload.single('crocaPic'), addCrocaToAccident); // Add a croca to a accident ticket
+router.post('/tech/close/:accidentId', verifyToken, authorizePosition('tech'), closeAccident); // Close accident ticket
 router.delete('/:accidentId', verifyToken, authorizePosition('admin', 'superadmin'), deleteAccident); // Delete a accident ticket
 
 export default router;

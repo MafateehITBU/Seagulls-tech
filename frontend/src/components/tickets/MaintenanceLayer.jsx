@@ -36,7 +36,9 @@ const MaintenanceLayer = () => {
     const fetchData = async () => {
         try {
             const response = await axiosInstance.get('/ticket/maintenance-tickets');
-            const filtered = response.data.filter(ticket => ticket.ticketId?.techTicketApprove === true);
+            const filtered = Array.isArray(response.data)
+                ? response.data.filter(ticket => ticket.ticketId?.techTicketApprove === true)
+                : [];
             setTickets(filtered);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -80,7 +82,7 @@ const MaintenanceLayer = () => {
         }
 
         try {
-            await axiosInstance.post(`/ticket/reject/${selectedTicketForReject}`, { rejectReport: rejectReason });
+            await axiosInstance.post(`/ticket/reject/${selectedTicketForReject}`, { rejectionReason: rejectReason });
             toast.success('Ticket rejected successfully!', { position: "top-right" });
             setShowRejectModal(false);
             setRejectReason('');
@@ -136,10 +138,29 @@ const MaintenanceLayer = () => {
                 }
 
                 if (approved === false) {
-                    return <span className="badge bg-danger">Rejected</span>;
+                    // Show "Rejected" but make it a dropdown with only "Approve"
+                    return (
+                        <div className="dropdown">
+                            <span
+                                className="badge bg-danger dropdown-toggle"
+                                data-bs-toggle="dropdown"
+                                role="button"
+                                style={{ cursor: 'pointer' }}
+                            >
+                                Rejected
+                            </span>
+                            <ul className="dropdown-menu">
+                                <li>
+                                    <button className="dropdown-item" onClick={() => handleApprove(ticketId)}>
+                                        Approve
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    );
                 }
 
-                // If undefined or null => show dropdown
+                // If undefined or null => show full dropdown
                 return (
                     <div className="dropdown">
                         <span
@@ -260,9 +281,9 @@ const MaintenanceLayer = () => {
                     <h5 className='card-title mb-0'>Maintenance Tickets</h5>
 
                     <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 w-100 w-md-auto">
-                        <GlobalFilter 
-                            globalFilter={globalFilter} 
-                            setGlobalFilter={setGlobalFilter} 
+                        <GlobalFilter
+                            globalFilter={globalFilter}
+                            setGlobalFilter={setGlobalFilter}
                             className="w-100 w-md-auto"
                         />
                         <button
@@ -301,12 +322,14 @@ const MaintenanceLayer = () => {
                             <tbody {...getTableBodyProps()}>
                                 {page.map(row => {
                                     prepareRow(row);
+                                    const { key, ...rowProps } = row.getRowProps();
                                     return (
-                                        <tr {...row.getRowProps()}>
+                                        <tr key={row.id} {...rowProps}>
                                             {row.cells.map(cell => {
-                                                const { key, ...cellProps } = cell.getCellProps();
+                                                const cellProps = cell.getCellProps();
+                                                const { key, ...rest } = cellProps;
                                                 return (
-                                                    <td key={key} {...cellProps} style={{ textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                                                    <td key={key} {...rest} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                                                         {cell.render('Cell')}
                                                     </td>
                                                 );

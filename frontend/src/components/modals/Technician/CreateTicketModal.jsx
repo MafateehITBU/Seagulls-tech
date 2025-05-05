@@ -3,16 +3,20 @@ import { Modal, Button, Form } from 'react-bootstrap';
 import axiosInstance from "../../../axiosConfig";
 import { toast } from 'react-toastify';
 
-const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
+const CreateMaintModal = ({ show, handleClose, fetchData, type }) => {
     const [priority, setPriority] = useState('Low');
     const [assetId, setAssetId] = useState('');
     const [description, setDescription] = useState('');
     const [assets, setAssets] = useState([]);
-    const [assetType, setAssetType] = useState('');  // New state for Asset Type
-    const [location, setLocation] = useState('');    // New state for Location
+    const [assetType, setAssetType] = useState('');
+    const [location, setLocation] = useState('');
+    const [requireSpare, setRequireSpare] = useState(false);
+    const [spareParts, setSpareParts] = useState([]);
+    const [requiredSpareParts, setRequiredSpareParts] = useState([]);
 
     useEffect(() => {
         fetchAssets();
+        fetchSpareParts();
     }, []);
 
     const fetchAssets = async () => {
@@ -24,15 +28,23 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
         }
     };
 
+    const fetchSpareParts = async () => {
+        try {
+            const response = await axiosInstance.get('/sparePart');
+            setSpareParts(response.data);
+        } catch (error) {
+            console.error('Error fetching spare parts:', error);
+        }
+    };
+
     const handleAssetChange = (e) => {
         const selectedAssetId = e.target.value;
         setAssetId(selectedAssetId);
 
-        // Find the selected asset and set its type and location
         const selectedAsset = assets.find(asset => asset._id === selectedAssetId);
         if (selectedAsset) {
-            setAssetType(selectedAsset.assetType || '');  // Set asset type
-            setLocation(selectedAsset.location || '');    // Set location
+            setAssetType(selectedAsset.assetType || '');
+            setLocation(selectedAsset.location || '');
         }
     };
 
@@ -42,6 +54,8 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
         setDescription('');
         setAssetType('');
         setLocation('');
+        setRequireSpare(false);
+        setRequiredSpareParts([]);
     };
 
     const handleSubmit = async (e) => {
@@ -50,26 +64,27 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
         const ticketData = {
             priority,
             assetId,
-            description
+            description,
+            requireSpareParts: requireSpare,
+            ...(requireSpare && { spareParts: requiredSpareParts })
         };
 
         try {
-            await axiosInstance.post('/cleaning', ticketData);
+            await axiosInstance.post(`/${type}`, ticketData);
             toast.success('Ticket created successfully!', { position: "top-right" });
-            fetchData();  // Refresh the ticket list
-            resetForm();  // Clear the form
-            handleClose(); // Close the modal after success
+            fetchData();
+            resetForm();
+            handleClose();
         } catch (error) {
             const backendMessage = error.response?.data?.message || error.message;
             toast.error('Failed to create the ticket. ' + backendMessage, { position: "top-right" });
         }
     };
 
-
     return (
         <Modal show={show} onHide={handleClose}>
             <Modal.Header closeButton>
-                <Modal.Title className="h5">Create New Cleaning Ticket</Modal.Title>
+                <Modal.Title className="h5">Create New Ticket</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form onSubmit={handleSubmit} className='d-flex flex-column'>
@@ -95,7 +110,7 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
                         <Form.Control
                             as="select"
                             value={assetId}
-                            onChange={handleAssetChange}  // Update the state on asset selection
+                            onChange={handleAssetChange}
                             required
                         >
                             <option value="">Select Asset</option>
@@ -126,6 +141,45 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
                         />
                     </Form.Group>
 
+                    {/* Require Spare Part Checkbox */}
+                    <Form.Group controlId="requireSpare">
+                        <Form.Check
+                            type="checkbox"
+                            label={<span>Require Spare Part?</span>}
+                            checked={requireSpare}
+                            onChange={(e) => setRequireSpare(e.target.checked)}
+                            className="d-flex align-items-center mt-4"
+                        />
+                    </Form.Group>
+
+                    {/* Spare Part Multi-select Dropdown */}
+                    {requireSpare && (
+                        <Form.Group controlId="spareParts">
+                            <Form.Label>
+                                Select Spare Parts {' '}
+                                <span style={{ fontSize: '0.85em', color: '#6c757d' }}>
+                                    (you can select multiple parts)
+                                </span>
+                            </Form.Label>
+                            <select
+                                multiple
+                                className="form-control"
+                                value={requiredSpareParts}
+                                onChange={(e) => {
+                                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                    setRequiredSpareParts(selected.map(String));
+                                }}
+                                style={{ height: '80px', overflowY: 'auto' }}
+                            >
+                                {spareParts.map((part) => (
+                                    <option key={part._id} value={part._id}>
+                                        {part.partName}
+                                    </option>
+                                ))}
+                            </select>
+                        </Form.Group>
+                    )}
+
                     {/* Description textarea */}
                     <Form.Group controlId="description">
                         <Form.Label>Description</Form.Label>
@@ -147,4 +201,4 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
     );
 };
 
-export default CreateCleaningTicketModal;
+export default CreateMaintModal;

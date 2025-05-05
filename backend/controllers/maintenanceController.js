@@ -151,7 +151,7 @@ export const getMaintTicketsTech = async (req, res) => {
         const maints = await Maintenance.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
+                select: 'openedBy assignedTo priority assetId rejectReportId description status openedByModel startTime endTime timer techTicketApprove approved rejectionReason',
                 populate: [
                     {
                         path: 'openedBy',
@@ -163,7 +163,7 @@ export const getMaintTicketsTech = async (req, res) => {
                     },
                     {
                         path: 'assetId',
-                        select: 'name',
+                        select: 'assetName assetNo assetType location coordinates',
                     },
                 ],
             });
@@ -184,6 +184,12 @@ export const getMaintTicketsTech = async (req, res) => {
                 const report = await Report.findById(maint.reportId);
                 maint.reportId = report;
             }
+
+            if (maint.rejectReportId) {
+                const report = await Report.findById(maint.rejectReportId);
+                maint.rejectReportId = report;
+            }
+            
             return maint;
         }));
 
@@ -381,6 +387,7 @@ export const closeMaint = async (req, res) => {
         maint.status = 'Closed';
         await maint.save();
 
+        ticket.status = 'Done';
         ticket.endTime = new Date();
         // calculate the time spent on the maint (timer)
         const timeSpent = ticket.endTime - ticket.startTime;

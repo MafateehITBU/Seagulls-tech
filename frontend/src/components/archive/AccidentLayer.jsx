@@ -129,6 +129,24 @@ const AccidentLayer = () => {
                 ) : '—';
             },
         },
+        {
+            Header: "Time Spent",
+            accessor: row => row.ticketId?.timer,
+            Cell: ({ row }) => {
+                const timer = row.original.ticketId?.timer;
+
+                const formatTime = (minutes) => {
+                    if (minutes == null) return "-";
+                    if (minutes < 60) return `${minutes} min`;
+
+                    const hrs = Math.floor(minutes / 60);
+                    const mins = minutes % 60;
+                    return `${hrs} hr${hrs > 1 ? "s" : ""}${mins > 0 ? ` ${mins} min` : ""}`;
+                };
+
+                return <span>{formatTime(timer)}</span>;
+            }
+        },
     ], []);
 
     const {

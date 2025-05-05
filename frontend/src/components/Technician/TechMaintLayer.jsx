@@ -5,7 +5,7 @@ import axiosInstance from "../../axiosConfig";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import CreateTicketModal from '../modals/Technician/CreateCleaningTicketModal';
+import CreateTicketModal from '../modals/Technician/CreateTicketModal';
 import AssetMoreInfoModal from '../modals/Technician/AssetMoreInfoModal';
 import AddReportModal from '../modals/Technician/AddReportModal';
 import ReportEditModal from '../modals/Technician/ReportEditModal';
@@ -15,18 +15,20 @@ const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
         className="form-control w-30"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search Cleaning Tickets..."
+        placeholder="Search Maintenance Tickets..."
     />
 );
 
-const TechCleaningLayer = () => {
+const TechMaintLayer = () => {
     const [tickets, setTickets] = useState([]);
     const [selectedReport, setSelectedReport] = useState(null);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [selectedRejectMaintId, setSelectedRejectMaintId] = useState(null);
     const [status, setStatus] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState(null);
     const [showReportModal, setShowReportModal] = useState(false);
-    const [selectedCleaningId, setSelectedCleaningId] = useState(null);
+    const [selectedMaintId, setSelectedMaintId] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -34,19 +36,20 @@ const TechCleaningLayer = () => {
 
     const fetchData = async () => {
         try {
-            const response = await axiosInstance.get('/cleaning/tech');
+            const response = await axiosInstance.get('/maintenance/tech');
             setTickets(response.data);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
 
-    const handleStart = async (cleaningId) => {
-        if (!cleaningId?.ticketId?.techTicketApprove) {
-           return toast.error('Wait for admin approval to start the ticket!', { position: "top-right" });
+    const handleStart = async (maint) => {
+        console.log("Trying to start ticket:", maint);
+        if (!maint?.ticketId?.techTicketApprove) {
+            return toast.error('Wait for admin approval to start the ticket!', { position: "top-right" });
         }
         try {
-            await axiosInstance.post(`/cleaning/tech/start/${cleaningId}`);
+            await axiosInstance.post(`/maintenance/tech/start/${maint._id}`);
             fetchData();
             toast.success('Ticket Started successfully!', { position: "top-right" });
         } catch (error) {
@@ -54,20 +57,25 @@ const TechCleaningLayer = () => {
         }
     }
 
-    const handleAddReport = (cleaningId) => {
-        setSelectedCleaningId(cleaningId);
+    const handleAddReport = (maintId) => {
+        setSelectedMaintId(maintId);
         setShowReportModal(true);
     };
 
-    const handleCloseTicket = async (cleaningId) => {
+    const handleAddRejectReport = (maintId) => {
+        setSelectedRejectMaintId(maintId);
+        setShowRejectModal(true);
+    };
+
+    const handleCloseTicket = async (maintId) => {
         try {
-            await axiosInstance.post(`/cleaning/tech/close/${cleaningId}`);
-            setTickets(prev => prev.filter(c => c._id !== cleaningId));
+            await axiosInstance.post(`/maintenance/tech/close/${maintId}`);
+            setTickets(prev => prev.filter(c => c._id !== maintId));
             toast.success('Ticket Closed successfully!', { position: "top-right" });
         } catch (error) {
             toast.error('Failed to close the ticket.', { position: "top-right" });
         }
-    }
+    };
 
     const columns = React.useMemo(() => [
         {
@@ -86,7 +94,7 @@ const TechCleaningLayer = () => {
                 return (
                     <button
                         className='btn btn-sm btn-primary'
-                        onClick={() => handleStart(row.original._id)}
+                        onClick={() => handleStart(row.original)}
                     >
                         Start
                     </button>
@@ -123,7 +131,7 @@ const TechCleaningLayer = () => {
             accessor: row => row.reportId,
             Cell: ({ row }) => {
                 const report = row.original.reportId;
-                const cleaningId = row.original._id;
+                const maintId = row.original._id;
                 const startTime = row.original.ticketId?.startTime;
 
                 if (report) {
@@ -145,7 +153,7 @@ const TechCleaningLayer = () => {
                                 toast.warn('Start Ticket!', { position: "top-right" });
                                 return;
                             }
-                            handleAddReport(cleaningId);
+                            handleAddReport(maintId);
                         }}
                     >
                         Add
@@ -154,22 +162,85 @@ const TechCleaningLayer = () => {
             },
         },
         {
-            Header: 'Close',
+            Header: 'Approved',
+            accessor: row => row.ticketId?.approved,
             Cell: ({ row }) => {
-                const report = row.original.reportId?._id;
+                const ticket = row.original.ticketId;
+                const approved = ticket?.approved;
 
-                if (report) {
+                if (approved === null || approved === undefined) {
+                    return '-';
+                }
+
+                if (approved === true) {
+                    return <span className='badge bg-success'>Approved</span>;
+                }
+
+                // If false (rejected)
+                return (
+                    <div className='d-flex flex-column'>
+                        <div className='badge bg-danger'>Rejected</div>
+                        <div>{ticket?.rejectionReason || '-'}</div>
+                    </div>
+                );
+            }
+        },
+        {
+            Header: 'Reject Report',
+            accessor: row => row.rejectReportId,
+            Cell: ({ row }) => {
+                const report = row.original.rejectReportId;
+                const maintId = row.original._id;
+                const ticket = row.original.ticketId;
+                const approved = ticket?.approved;
+
+                if (approved === null || approved === undefined || ( approved && !report)) {
+                    return '-';
+                }
+
+                // If false (rejected)
+                if (!approved && !report) {
                     return (
                         <button
-                            className='btn btn-sm btn-danger'
-                            onClick={() => handleCloseTicket(row.original._id)}
+                            className='btn btn-sm btn-primary'
+                            onClick={() => {
+                                handleAddRejectReport(maintId);
+                            }}
                         >
-                            Close
+                            Add
                         </button>
                     );
                 }
 
-                return <span>Attach a report!</span>;
+                return (
+                    <span style={{ cursor: 'pointer' }} onClick={() => {
+                        setSelectedReport(report);
+                        setStatus(row.original.status);
+                    }}>
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                );
+            },
+        },
+        {
+            Header: 'Close',
+            Cell: ({ row }) => {
+                const report = row.original.reportId?._id;
+
+                if (!report) {
+                    return <span>Attach a report!</span>;
+                } else if (!row.original.ticketId?.approved) {
+                    return <span>Wait for Admin approval</span>
+                }
+
+                return (
+                    <button
+                        className='btn btn-sm btn-danger'
+                        onClick={() => handleCloseTicket(row.original._id)}
+                    >
+                        Close
+                    </button>
+                );
             },
         },
     ], []);
@@ -188,7 +259,7 @@ const TechCleaningLayer = () => {
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex justify-content-between align-items-center flex-wrap">
-                <h5 className='card-title mb-0'>Cleaning Tickets</h5>
+                <h5 className='card-title mb-0'>Maintenance Tickets</h5>
 
                 <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
                 <button
@@ -245,6 +316,7 @@ const TechCleaningLayer = () => {
                 show={showModal}
                 handleClose={() => setShowModal(false)}
                 fetchData={fetchData}
+                type="maintenance"
             />
 
             {/* Asset Info Modal */}
@@ -259,10 +331,10 @@ const TechCleaningLayer = () => {
             <AddReportModal
                 show={showReportModal}
                 handleClose={() => setShowReportModal(false)}
-                Id={selectedCleaningId}
+                Id={selectedMaintId}
                 fetchData={fetchData}
-                type='cleaning'
-                route='tech'
+                type="maintenance"
+                route="tech"
             />
 
             {/* Report Edit Modal */}
@@ -274,8 +346,19 @@ const TechCleaningLayer = () => {
                     fetchData={fetchData}
                 />
             )}
+
+            {showRejectModal && (
+                <AddReportModal
+                    show={showRejectModal}
+                    handleClose={() => setShowRejectModal(false)}
+                    Id={selectedRejectMaintId}
+                    fetchData={fetchData}
+                    type="maintenance"
+                    route="tech/reject"
+                />
+            )}
         </div>
     );
 };
 
-export default TechCleaningLayer;
+export default TechMaintLayer;

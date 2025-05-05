@@ -143,7 +143,7 @@ export const getCleaningTicketsByTech = async (req, res) => {
         const cleanings = await Cleaning.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel startTime endTime timer',
+                select: 'openedBy assignedTo priority assetId description status openedByModel startTime endTime timer techTicketApprove',
                 populate: [
                     {
                         path: 'openedBy',
@@ -303,6 +303,7 @@ export const closeCleaning = async (req, res) => {
         cleaning.status = 'Closed';
         await cleaning.save();
 
+        ticket.status = 'Done';
         ticket.endTime = new Date();
         // calculate the time spent on the cleaning (timer)
         const timeSpent = ticket.endTime - ticket.startTime;

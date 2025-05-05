@@ -31,7 +31,7 @@ export const getClosedCleaningTickets = async (req, res) => {
 
         // check if closedTickets is empty
         if (closedTickets.length === 0) {
-            return res.status(404).json({ message: "No closed tickets found" });
+            return res.json([]);
         }
 
         res.status(200).json(closedTickets);
@@ -67,7 +67,7 @@ export const getCleaningTickets = async (req, res) => {
 
         // check if openTickets is empty
         if (openTickets.length === 0) {
-            return res.status(404).json({ message: "No tickets found" });
+            return res.json([]);
         }
 
         res.status(200).json(openTickets);
@@ -119,7 +119,7 @@ export const getClosedMaintTickets = async (req, res) => {
             });
 
         if (closedTickets.length === 0) {
-            return res.status(404).json({ message: "No closed tickets found" });
+            return res.json([]);
         }
 
         res.status(200).json(closedTickets);
@@ -171,7 +171,7 @@ export const getMaintTickets = async (req, res) => {
             });
 
         if (closedTickets.length === 0) {
-            return res.status(404).json({ message: "No tickets found" });
+            return res.json([]);
         }
 
         res.status(200).json(closedTickets);
@@ -223,7 +223,7 @@ export const getClosedAccidentTickets = async (req, res) => {
             });
 
         if (closedTickets.length === 0) {
-            return res.status(404).json({ message: "No closed tickets found" });
+            return res.json([]);
         }
 
         res.status(200).json(closedTickets);
@@ -275,7 +275,7 @@ export const getAccidentTickets = async (req, res) => {
             });
 
         if (closedTickets.length === 0) {
-            return res.status(404).json({ message: "No tickets found" });
+            return res.json([]);
         }
 
         res.status(200).json(closedTickets);

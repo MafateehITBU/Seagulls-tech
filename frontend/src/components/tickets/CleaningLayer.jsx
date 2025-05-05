@@ -32,7 +32,9 @@ const CleaningLayer = () => {
     const fetchData = async () => {
         try {
             const response = await axiosInstance.get('/ticket/cleaning-tickets');
-            const filtered = response.data.filter(ticket => ticket.ticketId?.techTicketApprove === true);
+            const filtered = Array.isArray(response.data)
+                ? response.data.filter(ticket => ticket.ticketId?.techTicketApprove === true)
+                : [];
             setTickets(filtered);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -170,9 +172,9 @@ const CleaningLayer = () => {
                     <h5 className='card-title mb-0'>Cleaning Tickets</h5>
 
                     <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 w-100 w-md-auto">
-                        <GlobalFilter 
-                            globalFilter={globalFilter} 
-                            setGlobalFilter={setGlobalFilter} 
+                        <GlobalFilter
+                            globalFilter={globalFilter}
+                            setGlobalFilter={setGlobalFilter}
                             className="w-100 w-md-auto"
                         />
                         <button
@@ -211,12 +213,14 @@ const CleaningLayer = () => {
                             <tbody {...getTableBodyProps()}>
                                 {page.map(row => {
                                     prepareRow(row);
+                                    const { key, ...rowProps } = row.getRowProps();
                                     return (
-                                        <tr {...row.getRowProps()}>
+                                        <tr key={row.id} {...rowProps}>
                                             {row.cells.map(cell => {
-                                                const { key, ...cellProps } = cell.getCellProps();
+                                                const cellProps = cell.getCellProps();
+                                                const { key, ...rest } = cellProps;
                                                 return (
-                                                    <td key={key} {...cellProps} style={{ textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                                                    <td key={key} {...rest} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                                                         {cell.render('Cell')}
                                                     </td>
                                                 );

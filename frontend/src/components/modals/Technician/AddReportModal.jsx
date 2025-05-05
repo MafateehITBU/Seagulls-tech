@@ -3,7 +3,7 @@ import { Modal, Button, Form } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import axiosInstance from '../../../axiosConfig';
 
-const AddReportModal = ({ show, handleClose, cleaningId, fetchData }) => {
+const AddReportModal = ({ show, handleClose, Id, fetchData, type, route }) => {
     const [description, setDescription] = useState('');
     const [photoBefore, setPhotoBefore] = useState(null);
     const [photoAfter, setPhotoAfter] = useState(null);
@@ -24,7 +24,7 @@ const AddReportModal = ({ show, handleClose, cleaningId, fetchData }) => {
 
         try {
             setLoading(true);
-            await axiosInstance.post(`/cleaning/tech/${cleaningId}`, formData, {
+            await axiosInstance.post(`/${type}/${route}/${Id}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -46,7 +46,9 @@ const AddReportModal = ({ show, handleClose, cleaningId, fetchData }) => {
     return (
         <Modal show={show} onHide={handleClose} size="lg" centered>
             <Modal.Header closeButton>
-                <Modal.Title>Add Cleaning Report</Modal.Title>
+                <Modal.Title>
+                    Add {type ? type.charAt(0).toUpperCase() + type.slice(1) : ''} Report
+                </Modal.Title>
             </Modal.Header>
             <Form onSubmit={handleSubmit}>
                 <Modal.Body>

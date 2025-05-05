@@ -156,7 +156,7 @@ export const getAccidentTicketsTech = async (req, res) => {
         const accidents = await Accident.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel',
+                select: 'openedBy assignedTo priority assetId description status openedByModel startTime endTime timer techTicketApprove approved rejectionReason rejectReportId',
                 populate: [
                     {
                         path: 'openedBy',
@@ -168,7 +168,7 @@ export const getAccidentTicketsTech = async (req, res) => {
                     },
                     {
                         path: 'assetId',
-                        select: 'name',
+                        select: 'assetName assetNo assetType location coordinates',
                     },
                 ],
             });
@@ -188,6 +188,10 @@ export const getAccidentTicketsTech = async (req, res) => {
             if (accident.reportId) {
                 const report = await Report.findById(accident.reportId);
                 accident.reportId = report;
+            }
+            if (accident.rejectReportId) {
+                const report = await Report.findById(accident.rejectReportId);
+                accident.rejectReportId = report;
             }
             return accident;
         }));
@@ -454,6 +458,7 @@ export const closeAccident = async (req, res) => {
         accident.status = 'Closed';
         await accident.save();
 
+        ticket.status = 'Done';
         ticket.endTime = new Date();
         // calculate the time spent on the accident (timer)
         const timeSpent = ticket.endTime - ticket.startTime;

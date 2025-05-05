@@ -27,7 +27,7 @@ const accidentSchema = new mongoose.Schema({
     croca: {
         crocaType: {
             type: String,
-            // enum: ['Croca', 'Anonymous', 'Insurance Expired'],
+            enum: ['Croca', 'Anonymous', 'Insurance Expired'],
         },
         cost: {
             type: String,

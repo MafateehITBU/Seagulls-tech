@@ -31,6 +31,7 @@ const TechnicianTicketLayer = () => {
             ]);
 
             const filterUnapproved = (data, type) => {
+                if (!Array.isArray(data)) return [];
                 return data
                     .filter(ticket => ticket.ticketId?.techTicketApprove === false)
                     .map(ticket => ({ ...ticket, type }));
@@ -164,13 +165,18 @@ const TechnicianTicketLayer = () => {
                             <tbody {...getTableBodyProps()}>
                                 {page.map(row => {
                                     prepareRow(row);
+                                    const { key, ...rowProps } = row.getRowProps();
                                     return (
-                                        <tr {...row.getRowProps()}>
-                                            {row.cells.map(cell => (
-                                                <td {...cell.getCellProps()} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                                                    {cell.render('Cell')}
-                                                </td>
-                                            ))}
+                                        <tr key={row.id} {...rowProps}>
+                                            {row.cells.map(cell => {
+                                                const cellProps = cell.getCellProps();
+                                                const { key, ...rest } = cellProps;
+                                                return (
+                                                    <td key={key} {...rest} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                                                        {cell.render('Cell')}
+                                                    </td>
+                                                );
+                                            })}
                                         </tr>
                                     );
                                 })}
