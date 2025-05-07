@@ -12,15 +12,19 @@ import { uploadToCloudinary } from "../utils/cloudinary.js";
 export const addSparePart = async (req, res) => {
     const { partNo, partName, partBarcode, quantity, minStock, maxStock, expiryDate, leadTime, storageType } = req.body;
 
-    if (!partNo || !partName || !partBarcode || !quantity || !minStock || !maxStock) {
-        return res.status(400).json({ message: "Please fill all required fields" });
+    const quantityNum = Number(quantity);
+    const minStockNum = Number(minStock);
+    const maxStockNum = Number(maxStock);
+
+    if (!partNo || !partName || !partBarcode || isNaN(quantityNum) || isNaN(minStockNum) || isNaN(maxStockNum)) {
+        return res.status(400).json({ message: "Please fill all required fields with valid values" });
     }
 
-    if (quantity < minStock || quantity > maxStock) {
+    if (quantityNum < minStockNum || quantityNum > maxStockNum) {
         return res.status(400).json({ message: "Quantity must be between minStock and maxStock" });
     }
 
-    if (minStock > maxStock) {
+    if (minStockNum > maxStockNum) {
         return res.status(400).json({ message: "minStock must be less than maxStock" });
     }
 
@@ -63,9 +67,9 @@ export const addSparePart = async (req, res) => {
             partNo,
             partName,
             partBarcode,
-            quantity,
-            minStock,
-            maxStock,
+            quantity: quantityNum,
+            minStock: minStockNum,
+            maxStock: maxStockNum,
             expiryDate,
             leadTime,
             storageType,
@@ -214,9 +218,12 @@ export const updateSparePart = async (req, res) => {
     try {
         let photoUrl = null;
         if (req.file) {
-            const result = await uploadToCloudinary(req.file.path, "spareParts");
-            photoUrl = result.secure_url;
-            fs.unlinkSync(req.file.path);
+            try {
+                photoUrl = await uploadToCloudinary(req.file.path);
+                fs.unlinkSync(req.file.path);  // Clean up the file after uploading
+            } catch (error) {
+                return res.status(500).json({ message: "Failed to upload profile picture" });
+            }
         }
 
         if (vendorId) {

@@ -241,8 +241,8 @@ const CreateSparePartModal = ({ show, handleClose, fetchData }) => {
                         />
                     </Form.Group>
 
-                    <Button variant="primary" type="submit" className="align-self-center mt-3" style={{ width: "150px" }}>
-                        Create Asset
+                    <Button variant="primary" type="submit" className="align-self-center mt-3" style={{ width: "200px" }}>
+                        Create Spare Part
                     </Button>
                 </Form>
             </Modal.Body>
