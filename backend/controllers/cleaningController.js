@@ -6,6 +6,8 @@ import Admin from "../models/Admin.js";
 import Report from "../models/Report.js";
 import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { emitToAdmins, emitToTech } from '../utils/socket.js';
+import { v4 as uuidv4 } from 'uuid';
 
 /**------------------------------------------
 * @desc Create a new cleaning Ticket
@@ -80,10 +82,30 @@ export const createCleaningTicket = async (req, res) => {
             note: null,
             status: 'Pending',
         });
-        const createdCleaning = await cleaning.save();
-        // Return the created ticket
-        res.status(201).json({ message: "Cleaning Ticket Created", ticket: createdTicket, cleaning: createdCleaning });
+        const createdCleaning = await cleaning.save()
 
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        // Emit to admins and techs
+        if (openedByModel === 'Tech') {
+            emitToAdmins('new-notification', {
+                notifID,
+                title: "Ticket Needs Approval!",
+                message: 'A new ticket has been created by a Tech',
+                route: "/admin/tech-tickets",
+                createdAt: new Date(),
+            });
+        } else if (openedByModel === 'Admin') {
+            emitToTech(assignedTo, 'new-notification', {
+                notifID,
+                title: "New Cleaning Ticket!",
+                message: 'A new cleaning ticket has been assigned to you',
+                route: "/cleaning",
+                createdAt: new Date(),
+            });
+        }
+        res.status(201).json({ message: "Cleaning Ticket Created", ticket: createdTicket, cleaning: createdCleaning });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -96,7 +118,7 @@ export const createCleaningTicket = async (req, res) => {
  * @access Private
  *  @role Admin, Super Admin
  -------------------------------------------*/
- export const approveTechTicket = async (req, res) => {
+export const approveTechTicket = async (req, res) => {
     try {
         const cleaningId = req.params.cleaningId;
 
@@ -116,6 +138,17 @@ export const createCleaningTicket = async (req, res) => {
 
         ticket.techTicketApprove = true;
         await ticket.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToTech('new-notification', {
+            notifID,
+            title: "Ticket Approved!",
+            message: 'Start working on the ticket',
+            route: "/cleaning",
+            createdAt: new Date(),
+        });
         res.json({ message: "Cleaning Ticket approved successfully" });
     } catch (error) {
         console.error(error);
@@ -164,10 +197,14 @@ export const getCleaningTicketsByTech = async (req, res) => {
             return res.status(404).json({ message: "No cleaning tickets found" });
         }
 
-        // Filter by assigned tech
+        // Filter by assigned tech and ticket not closed
         const filteredCleanings = cleanings.filter(cleaning => {
             const assignedTo = cleaning.ticketId?.assignedTo?._id || cleaning.ticketId?.assignedTo;
-            return assignedTo?.toString() === id;
+            const ticketStatus = cleaning.ticketId?.status;
+            return (
+                assignedTo?.toString() === id &&
+                ticketStatus !== 'Closed'
+            );
         });
 
         // Populate report if exists
@@ -227,6 +264,18 @@ export const addReportToCleaning = async (req, res) => {
 
         cleaning.reportId = createdReport._id;
         await cleaning.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Report Uploaded!",
+            message: 'A maintenance report has been uploaded by a Tech',
+            route: "/maintenance",
+            createdAt: new Date(),
+        });
+
         res.json({ message: "Report added successfully" });
     } catch (error) {
         console.error(error);
@@ -310,6 +359,16 @@ export const closeCleaning = async (req, res) => {
         ticket.timer = Math.floor(timeSpent / 1000 / 60); // convert to minutes
         await ticket.save();
 
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Ticket Done!",
+            message: 'A maintenance ticket has been closed by a Tech',
+            route: "/maintenance",
+            createdAt: new Date(),
+        });
         res.json({ message: "Cleaning ended successfully" });
     } catch (error) {
         console.error(error);

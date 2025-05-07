@@ -41,12 +41,12 @@ const TechCleaningLayer = () => {
         }
     };
 
-    const handleStart = async (cleaningId) => {
-        if (!cleaningId?.ticketId?.techTicketApprove) {
+    const handleStart = async (cleaning) => {
+        if (!cleaning?.ticketId?.techTicketApprove) {
            return toast.error('Wait for admin approval to start the ticket!', { position: "top-right" });
         }
         try {
-            await axiosInstance.post(`/cleaning/tech/start/${cleaningId}`);
+            await axiosInstance.post(`/cleaning/tech/start/${cleaning._id}`);
             fetchData();
             toast.success('Ticket Started successfully!', { position: "top-right" });
         } catch (error) {
@@ -86,7 +86,7 @@ const TechCleaningLayer = () => {
                 return (
                     <button
                         className='btn btn-sm btn-primary'
-                        onClick={() => handleStart(row.original._id)}
+                        onClick={() => handleStart(row.original)}
                     >
                         Start
                     </button>

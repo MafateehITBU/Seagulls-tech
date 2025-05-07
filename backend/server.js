@@ -1,3 +1,5 @@
+import http from 'http';
+import { setupSocket } from './utils/socket.js'
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -63,7 +65,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
+const server = http.createServer(app);
+
+// Pass server to socket setup
+setupSocket(server);
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-}); 
+});

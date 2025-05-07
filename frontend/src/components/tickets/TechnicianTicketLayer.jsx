@@ -96,6 +96,7 @@ const TechnicianTicketLayer = () => {
         {
             Header: 'Description',
             accessor: row => row.ticketId?.description,
+            Cell: ({ value }) => <div style={{ width: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{value}</div>,
         },
         {
             Header: 'Created At',

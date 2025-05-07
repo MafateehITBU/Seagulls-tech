@@ -4,6 +4,8 @@ import Accident from "../models/Accident.js";
 import Cleaning from "../models/Cleaning.js";
 import SparePart from "../models/SparePart.js";
 import Tech from "../models/Tech.js";
+import { v4 as uuidv4 } from 'uuid';
+import { emitToAdmins } from '../utils/socket.js';
 
 /**----------------------------------------
  * @desc Get the tickets that are closed and associated with the cleaning
@@ -348,6 +350,20 @@ export const approveTicket = async (req, res) => {
                 if (!updatedSparePart) {
                     return res.status(400).json({
                         message: `Spare Part with ID ${sparePart._id} is invalid or out of stock`,
+                    });
+                }
+
+                // Check if updated quantity is below minStock
+                if (updatedSparePart.quantity < updatedSparePart.minStock) {
+                    // Generate a unique notifID
+                    const notifID = uuidv4(); // Generate a unique ID for the notification
+
+                    emitToAdmins('new-notification', {
+                        notifID,
+                        title: "Spare Parts!",
+                        message: `Spare part (${updatedSparePart.partNo}) is under min stock.`,
+                        route: "/admin/spare-parts",
+                        createdAt: new Date(),
                     });
                 }
             }

@@ -7,6 +7,8 @@ import Admin from "../models/Admin.js";
 import Asset from "../models/Asset.js";
 import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { emitToAdmins, emitToTech } from '../utils/socket.js';
+import { v4 as uuidv4 } from 'uuid';
 
 /**------------------------------------------
  * @desc Create a new accident record
@@ -93,6 +95,28 @@ export const createAccidentTicket = async (req, res) => {
 
         const createdAccident = await accident.save();
 
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        // Emit to admins and techs
+        if (openedByModel === 'Tech') {
+            emitToAdmins('new-notification', {
+                notifID,
+                title: "Ticket Needs Approval!",
+                message: 'A new ticket has been created by a Tech',
+                route: "/admin/tech-tickets",
+                createdAt: new Date(),
+            });
+        } else if (openedByModel === 'Admin') {
+            emitToTech(assignedTo, 'new-notification', {
+                notifID,
+                title: "New Accident Ticket!",
+                message: 'A new accident ticket has been assigned to you',
+                route: "/accident",
+                createdAt: new Date(),
+            });
+        }
+
         res.status(201).json({
             message: "Accident Ticket created successfully!",
             accident: createdAccident,
@@ -129,6 +153,18 @@ export const approveTechTicket = async (req, res) => {
 
         ticket.techTicketApprove = true;
         await ticket.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToTech('new-notification', {
+            notifID,
+            title: "Ticket Approved!",
+            message: 'Start working on the ticket',
+            route: "/accident",
+            createdAt: new Date(),
+        });
+
         res.json({ message: "Accident Ticket approved successfully" });
     } catch (error) {
         console.error(error);
@@ -180,7 +216,11 @@ export const getAccidentTicketsTech = async (req, res) => {
         // Filter by assigned tech
         const filteredAccidents = accidents.filter(accident => {
             const assignedTo = accident.ticketId?.assignedTo?._id || accident.ticketId?.assignedTo;
-            return assignedTo?.toString() === id;
+            const ticketStatus = accident.ticketId?.status;
+            return (
+                assignedTo?.toString() === id &&
+                ticketStatus !== 'Closed'
+            );
         });
 
         // Populate report if exists
@@ -287,13 +327,23 @@ export const addReportToAccident = async (req, res) => {
 
         accident.reportId = createdReport._id;
         await accident.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Report Uploaded!",
+            message: 'A report has been Uploaded by a Tech',
+            route: "/accident",
+            createdAt: new Date(),
+        });
         res.json({ message: "Report added successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
     }
 }
-
 
 /**------------------------------------------
  * @desc Add a report to a accident ticket by Tech
@@ -348,6 +398,17 @@ export const addRejectReportToAccident = async (req, res) => {
 
         accident.rejectReportId = createdReport._id;
         await accident.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Report Uploaded!",
+            message: 'A report has been Uploaded by a Tech',
+            route: "/accident",
+            createdAt: new Date(),
+        });
         res.json({ message: "Report added successfully" });
     } catch (error) {
         console.error(error);
@@ -418,9 +479,18 @@ export const addCrocaToAccident = async (req, res) => {
         }
 
         await accident.save();
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Croca Uploaded!",
+            message: 'A Croca has been Uploaded by a Tech',
+            route: "/accident",
+            createdAt: new Date(),
+        });
 
         res.json({ message: "Croca added successfully" });
-
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -464,6 +534,17 @@ export const closeAccident = async (req, res) => {
         const timeSpent = ticket.endTime - ticket.startTime;
         ticket.timer = Math.floor(timeSpent / 1000 / 60); // convert to minutes
         await ticket.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Ticket Done!",
+            message: 'An accident ticket has been closed by a Tech',
+            route: "/accident",
+            createdAt: new Date(),
+        });
 
         res.json({ message: "Accident ended successfully" });
     } catch (error) {

@@ -1,12 +1,13 @@
 import Maintenance from "../models/Maintenance.js";
 import Ticket from "../models/Ticket.js";
 import Report from "../models/Report.js";
-import SparePart from "../models/SparePart.js";
 import Tech from "../models/Tech.js";
 import Admin from "../models/Admin.js";
 import Asset from "../models/Asset.js";
 import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { emitToAdmins, emitToTech } from '../utils/socket.js';
+import { v4 as uuidv4 } from 'uuid';
 
 /**------------------------------------------
  * @desc Create a new maintenance record
@@ -88,6 +89,28 @@ export const createMaintenanceTicket = async (req, res) => {
 
         const createdMaintenance = await maintenance.save();
 
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        // Emit to admins and techs
+        if (openedByModel === 'Tech') {
+            emitToAdmins('new-notification', {
+                notifID,
+                title: "Ticket Needs Approval!",
+                message: 'A new ticket has been created by a Tech',
+                route: "/admin/tech-tickets",
+                createdAt: new Date(),
+            });
+        } else if (openedByModel === 'Admin') {
+            emitToTech(assignedTo, 'new-notification', {
+                notifID,
+                title: "New Maintenance Ticket!",
+                message: 'A new maintenance ticket has been assigned to you',
+                route: "/maintenance",
+                createdAt: new Date(),
+            });
+        }
+
         res.status(201).json({
             message: "Maintenance created successfully",
             maintenance: createdMaintenance,
@@ -124,6 +147,18 @@ export const approveTechTicket = async (req, res) => {
 
         ticket.techTicketApprove = true;
         await ticket.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToTech('new-notification', {
+            notifID,
+            title: "Ticket Approved!",
+            message: 'Start working on the ticket',
+            route: "/maintenance",
+            createdAt: new Date(),
+        });
+
         res.json({ message: "Maintenance Ticket approved successfully" });
     } catch (error) {
         console.error(error);
@@ -175,7 +210,11 @@ export const getMaintTicketsTech = async (req, res) => {
         // Filter by assigned tech
         const filteredMaints = maints.filter(maint => {
             const assignedTo = maint.ticketId?.assignedTo?._id || maint.ticketId?.assignedTo;
-            return assignedTo?.toString() === id;
+            const ticketStatus = maint.ticketId?.status;
+            return (
+                assignedTo?.toString() === id &&
+                ticketStatus !== 'Closed'
+            );
         });
 
         // Populate report if exists
@@ -189,7 +228,7 @@ export const getMaintTicketsTech = async (req, res) => {
                 const report = await Report.findById(maint.rejectReportId);
                 maint.rejectReportId = report;
             }
-            
+
             return maint;
         }));
 
@@ -241,6 +280,17 @@ export const addReportToMaint = async (req, res) => {
 
         maint.reportId = createdReport._id;
         await maint.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Report Uploaded!",
+            message: 'A report has been Uploaded by a Tech',
+            route: "/maintenance",
+            createdAt: new Date(),
+        });
         res.json({ message: "Report added successfully" });
     } catch (error) {
         console.error(error);
@@ -349,6 +399,17 @@ export const addRejectReportToMaint = async (req, res) => {
 
         maint.rejectReportId = createdReport._id;
         await maint.save();
+
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Report Uploaded!",
+            message: 'A report has been Uploaded by a Tech',
+            route: "/maintenance",
+            createdAt: new Date(),
+        });
         res.json({ message: "Report added successfully" });
     } catch (error) {
         console.error(error);
@@ -394,6 +455,16 @@ export const closeMaint = async (req, res) => {
         ticket.timer = Math.floor(timeSpent / 1000 / 60); // convert to minutes
         await ticket.save();
 
+        // Generate a unique notifID
+        const notifID = uuidv4(); // Generate a unique ID for the notification
+
+        emitToAdmins('new-notification', {
+            notifID,
+            title: "Ticket Done!",
+            message: 'A maintenance ticket has been closed by a Tech',
+            route: "/maintenance",
+            createdAt: new Date(),
+        });
         res.json({ message: "Maintenance ended successfully" });
     } catch (error) {
         console.error(error);

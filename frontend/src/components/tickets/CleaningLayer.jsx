@@ -63,7 +63,15 @@ const CleaningLayer = () => {
         },
         {
             Header: 'Opened By',
-            accessor: row => row.ticketId?.openedBy?.name || 'System',
+            accessor: row => row.ticketId?.openedBy?.name || 'N/A',
+            Cell: ({ value, row }) => {
+                const openedByModel = row.original.ticketId?.openedByModel;
+                return (
+                    <div style={{ width: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                        <strong>{openedByModel}</strong>: {value}
+                    </div>
+                )
+            }
         },
         {
             Header: 'Assigned To',
@@ -85,6 +93,7 @@ const CleaningLayer = () => {
         {
             Header: 'Description',
             accessor: row => row.ticketId?.description,
+            Cell: ({ value }) => <div style={{ width: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{value}</div>,
         },
         {
             Header: 'Created At',

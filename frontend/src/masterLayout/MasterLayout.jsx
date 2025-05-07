@@ -3,13 +3,14 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggleButton from "../helper/ThemeToggleButton";
 import { useAuth } from '../context/AuthContext';
+import { parseISO } from "date-fns";
 
 const MasterLayout = ({ children }) => {
   let [sidebarActive, seSidebarActive] = useState(false);
   let [mobileMenu, setMobileMenu] = useState(false);
   const location = useLocation(); // Hook to get the current route
   const navigate = useNavigate();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, notifications, removeNotification } = useAuth();
 
   useEffect(() => {
     const handleDropdownClick = (event) => {
@@ -93,6 +94,72 @@ const MasterLayout = ({ children }) => {
     navigate('/sign-in');
   };
 
+  // Helper function to calculate time difference
+  const timeAgo = (date) => {
+    const now = new Date();
+    const createdAt = parseISO(date);
+
+    if (isNaN(createdAt)) {
+      return "Invalid date";
+    }
+
+    const timeDifference = now - createdAt;
+    const seconds = Math.floor(timeDifference / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) {
+      return "Just now";
+    } else if (minutes < 60) {
+      return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+    } else if (hours < 24) {
+      return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    } else {
+      return `${days} day${days > 1 ? "s" : ""} ago`;
+    }
+  };
+
+  const renderNotifications = () => {
+    if (notifications.length === 0) {
+      return (
+        <p className="text-center py-12 px-16">No new notifications</p>
+      );
+    }
+
+    console.log("Notifications:", notifications);
+
+    // Reverse the notifications array to show recent notifications first
+    const recentNotifications = [...notifications].reverse(); // Create a new array with reversed order
+
+    return recentNotifications.map((notification, index) => (
+      <Link
+        to={notification.route}
+        key={notification.notifID}
+        className="px-24 py-12 d-flex align-items-start gap-3 mb-2 justify-content-between"
+        onClick={() => removeNotification(notification.notifID)}  // Remove the notification on click
+      >
+        <div className="text-black hover-bg-transparent hover-text-primary d-flex align-items-center gap-3">
+          <span className="w-44-px h-44-px bg-success-subtle text-success-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0">
+            <Icon
+              icon="bitcoin-icons:verify-outline"
+              className="icon text-xxl"
+            />
+          </span>
+          <div>
+            <h6 className="text-md fw-semibold mb-4">{notification.title}</h6>
+            <p className="mb-0 text-sm text-secondary-light text-w-200-px">
+              {notification.message}
+            </p>
+          </div>
+        </div>
+        <span className="text-sm text-secondary-light flex-shrink-0">
+          {timeAgo(notification.createdAt) || "Just now"}
+        </span>
+      </Link>
+    ));
+  };
+  
   return (
     <section className={mobileMenu ? "overlay active" : "overlay "}>
       {/* sidebar */}
@@ -423,55 +490,37 @@ const MasterLayout = ({ children }) => {
                 {/* ThemeToggleButton */}
                 <ThemeToggleButton />
 
-
-                <div className='dropdown'>
+                {/* Add notifications */}
+                <div className="dropdown">
                   <button
-                    className='has-indicator w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center'
-                    type='button'
-                    data-bs-toggle='dropdown'
+                    className="has-indicator w-40-px h-40-px bg-neutral-200 rounded-circle d-flex justify-content-center align-items-center"
+                    type="button"
+                    data-bs-toggle="dropdown"
                   >
                     <Icon
-                      icon='iconoir:bell'
-                      className='text-primary-light text-xl'
+                      icon="iconoir:bell"
+                      className="text-primary-light text-xl"
                     />
+                    {/* Show red circle if there are notifications */}
+                    {notifications.length > 0 && (
+                      <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {notifications.length}
+                      </span>
+                    )}
                   </button>
-                  <div className='dropdown-menu to-top dropdown-menu-lg p-0'>
-                    <div className='m-16 py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2'>
+                  <div className="dropdown-menu to-top dropdown-menu-lg p-0">
+                    <div className="m-16 py-12 px-16 radius-8 bg-primary-50 mb-16 d-flex align-items-center justify-content-between gap-2">
                       <div>
-                        <h6 className='text-lg text-primary-light fw-semibold mb-0'>
+                        <h6 className="text-lg text-primary-light fw-semibold mb-0">
                           Notifications
                         </h6>
                       </div>
-                      <span className='text-primary-600 fw-semibold text-lg w-40-px h-40-px rounded-circle bg-base d-flex justify-content-center align-items-center'>
-                        01
+                      <span className="text-primary-600 fw-semibold text-lg w-40-px h-40-px rounded-circle bg-base d-flex justify-content-center align-items-center">
+                        {notifications.length}
                       </span>
                     </div>
-                    <div className='max-h-400-px overflow-y-auto scroll-sm pe-4'>
-                      <Link
-                        to='#'
-                        className='px-24 py-12 d-flex align-items-start gap-3 mb-2 justify-content-between'
-                      >
-                        <div className='text-black hover-bg-transparent hover-text-primary d-flex align-items-center gap-3'>
-                          <span className='w-44-px h-44-px bg-success-subtle text-success-main rounded-circle d-flex justify-content-center align-items-center flex-shrink-0'>
-                            <Icon
-                              icon='bitcoin-icons:verify-outline'
-                              className='icon text-xxl'
-                            />
-                          </span>
-                          <div>
-                            <h6 className='text-md fw-semibold mb-4'>
-                              Congratulations
-                            </h6>
-                            <p className='mb-0 text-sm text-secondary-light text-w-200-px'>
-                              Your profile has been Verified. Your profile has
-                              been Verified
-                            </p>
-                          </div>
-                        </div>
-                        <span className='text-sm text-secondary-light flex-shrink-0'>
-                          23 Mins ago
-                        </span>
-                      </Link>
+                    <div className="max-h-400-px overflow-y-auto scroll-sm pe-4">
+                      {renderNotifications()}
                     </div>
                   </div>
                 </div>

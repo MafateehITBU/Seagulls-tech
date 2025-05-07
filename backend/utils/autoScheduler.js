@@ -2,6 +2,8 @@ import Asset from "../models/Asset.js";
 import Ticket from "../models/Ticket.js";
 import Maintenance from "../models/Maintenance.js";
 import Cleaning from "../models/Cleaning.js";
+import { emitToAdmins, emitToTech } from './socket.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export const autoMaintenanceScheduler = async () => {
     try {
@@ -39,6 +41,17 @@ export const autoMaintenanceScheduler = async () => {
             asset.maintenanceSchedule.nextMaintenanceDate = nextDate;
 
             await asset.save();
+
+            // Generate a unique notifID
+            const notifID = uuidv4(); // Generate a unique ID for the notification
+
+            emitToAdmins('new-notification', {
+                notifID,
+                title: "System Ticket Created!",
+                message: 'A maintenance ticket created automatically.',
+                route: "/maintenance",
+                createdAt: new Date(),
+            });
         }
 
         console.log(`[AutoMaint] Processed ${dueAssets.length} assets.`);
@@ -84,6 +97,16 @@ export const autoCleaningScheduler = async () => {
             asset.cleaningSchedule.nextCleaningDate = nextDate;
 
             await asset.save();
+            // Generate a unique notifID
+            const notifID = uuidv4(); // Generate a unique ID for the notification
+
+            emitToAdmins('new-notification', {
+                notifID,
+                title: "System Ticket Created!",
+                message: 'A cleaning ticket created automatically.',
+                route: "/cleaning",
+                createdAt: new Date(),
+            });
         }
 
         console.log(`[AutoCleaning] Processed ${dueAssets.length} assets.`);
