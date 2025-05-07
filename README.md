@@ -1,19 +1,61 @@
 # Seagulls Tech - MERN Stack Application
 
-This is a full-stack application built with the MERN (MongoDB, Express.js, React.js, Node.js) stack.
+A comprehensive asset management system built with the MERN (MongoDB, Express.js, React.js, Node.js) stack, featuring user authentication, role-based access control, and asset tracking capabilities.
 
 ## Project Structure
 
 ```
 seagulls-tech/
 ├── backend/           # Backend server
+│   ├── controllers/  # Route controllers
+│   ├── middleware/   # Custom middleware
+│   ├── models/       # Database models
+│   ├── routes/       # API routes
+│   ├── uploads/      # File uploads directory
+│   ├── utils/        # Utility functions
 │   ├── server.js     # Main server file
 │   ├── package.json  # Backend dependencies
-│   └── .env          # Environment variables
-└── README.md         # Project documentation
+│   └── nodemon.json  # Development server configuration
+├── frontend/         # Frontend application
+│   ├── public/       # Static files
+│   ├── src/          # React source code
+│   │   ├── components/  # React components
+│   │   ├── context/     # React context providers
+│   │   ├── pages/       # Page components
+│   │   └── utils/       # Frontend utilities
+│   ├── package.json     # Frontend dependencies
+│   └── .gitignore       # Frontend gitignore
+└── README.md            # Project documentation
 ```
 
-## Backend Setup
+## Features
+
+- **User Authentication**
+  - Secure login and registration
+  - JWT-based authentication
+  - Password reset functionality
+  - Role-based access control (Admin, Technician)
+
+- **Asset Management**
+  - Asset tracking and monitoring
+  - QR code generation for assets
+  - Asset status updates
+  - Asset history tracking
+
+- **User Management**
+  - Admin and technician management
+  - Profile management
+  - Password updates
+  - Session management
+
+- **Responsive Design**
+  - Mobile-friendly interface
+  - Bootstrap-based UI components
+  - Modern and intuitive design
+
+## Setup Instructions
+
+### Backend Setup
 
 1. Navigate to the backend directory:
    ```bash
@@ -39,6 +81,25 @@ seagulls-tech/
 
 The server will run on `http://localhost:5000`
 
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm start
+   ```
+
+The frontend will run on `http://localhost:3000`
+
 ## Technologies Used
 
 - **Backend:**
@@ -48,16 +109,54 @@ The server will run on `http://localhost:5000`
   - Mongoose
   - JWT Authentication
   - Bcrypt for password hashing
+  - Multer for file uploads
+
+- **Frontend:**
+  - React.js
+  - React Router
+  - Axios for API calls
+  - Bootstrap 5
+  - React Icons
+  - SweetAlert2 for modals
+  - React Table for data display
 
 ## API Endpoints
 
-- `GET /` - Welcome message
-- More endpoints will be added as the project progresses
+### Authentication
+- `POST /auth/login` - User login
+- `POST /auth/register` - User registration
+- `POST /auth/forgot-password` - Password reset request
+- `POST /auth/reset-password` - Password reset
+
+### Users
+- `GET /admin` - Get all admins
+- `POST /admin` - Create new admin
+- `PUT /admin/:id` - Update admin
+- `DELETE /admin/:id` - Delete admin
+- `PUT /admin/update-password/:id` - Update admin password
+
+### Technicians
+- `GET /tech` - Get all technicians
+- `POST /tech` - Create new technician
+- `PUT /tech/:id` - Update technician
+- `DELETE /tech/:id` - Delete technician
+- `PUT /tech/update-password/:id` - Update technician password
+
+### Assets
+- `GET /asset` - Get all assets
+- `POST /asset` - Create new asset
+- `PUT /asset/:id` - Update asset
+- `DELETE /asset/:id` - Delete asset
+- `GET /asset/:id` - Get asset details
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request 
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 

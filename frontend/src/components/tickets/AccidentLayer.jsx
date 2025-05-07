@@ -13,10 +13,10 @@ import DeleteModal from '../modals/DeleteModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-100"
+        className="form-control"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search Accident Tickets..."
+        placeholder="Search Tickets..."
     />
 );
 
@@ -292,29 +292,31 @@ const AccidentLayer = () => {
         useGlobalFilter,
         useSortBy,
         usePagination
-    );
+    ); 
 
     return (
         <div className="card basic-data-table">
             <ToastContainer />
-            <div className="card-header">
-                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                    <h5 className='card-title mb-0'>Accident Tickets</h5>
-
-                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2 w-100 w-md-auto">
-                        <GlobalFilter
-                            globalFilter={globalFilter}
-                            setGlobalFilter={setGlobalFilter}
-                            className="w-100 w-md-auto"
-                        />
-                        <button
-                            className="btn btn-success w-100 w-md-auto"
-                            onClick={() => setShowModal(true)}
-                        >
-                            <Icon icon="mdi:plus" />
-                            <span className="ms-1">Create New Ticket</span>
-                        </button>
-                    </div>
+            <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+           
+                    <h5 className='card-title mb-0  flex-shrink-0 w-35 w-md-100 w-sm-100'>Accident Tickets</h5>
+                   
+                        <div className="w-35 w-md-100 wd-sm-100">
+                            <GlobalFilter
+                                globalFilter={globalFilter}
+                                setGlobalFilter={setGlobalFilter}
+                                className="form-control"
+                            />
+                        </div>
+                        <div className="w-35 w-md-100 w-sm-100">
+                            <button
+                                className="btn btn-success w-100 w-md-auto"
+                                onClick={() => setShowModal(true)}
+                            >
+                                <span className="ms-1">Create New Ticket</span>
+                            </button>
+                      
+                 
                 </div>
             </div>
             <div className="card-body p-0">

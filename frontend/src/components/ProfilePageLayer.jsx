@@ -132,6 +132,7 @@ const ProfilePageLayer = () => {
         setIsSubmitting(true);
 
         try {
+            // Determine the endpoint based on user position
             const endpoint = user?.position === 'admin' || user?.position === 'superadmin'
                 ? `/admin/${user?.id}`
                 : `/tech/${user?.id}`;
@@ -245,18 +246,14 @@ const ProfilePageLayer = () => {
         setIsSubmitting(true);
 
         try {
+            // Determine the endpoint based on user position
             const endpoint = user?.position === 'admin' || user?.position === 'superadmin'
                 ? `/admin/update-password/${user?.id}`
                 : `/tech/update-password/${user?.id}`;
 
-            const token = Cookie.get('token');
             const response = await axiosInstance.put(endpoint, {
                 newPassword: passwordData.newPassword,
                 confirmPassword: passwordData.confirmPassword
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
             });
             
             if (response.data) {
@@ -266,24 +263,22 @@ const ProfilePageLayer = () => {
                     icon: 'success',
                     confirmButtonColor: '#3085d6',
                     confirmButtonText: 'OK'
-                }).then(async (result) => {
-                    if (result.isConfirmed && response.data.signOut) {
-                        // Clear the token from cookies
-                        Cookie.remove('token');
-                        // Reset user state
-                        updateUser({
-                            id: null,
-                            position: null,
-                            name: null,
-                            email: null,
-                            photo: null,
-                            phone: null,
-                            bio: null
-                        });
-                        // Navigate to sign in page
-                        navigate('/signin');
-                    }
                 });
+
+                // Clear the token from cookies
+                Cookie.remove('token');
+                // Reset user state
+                updateUser({
+                    id: null,
+                    position: null,
+                    name: null,
+                    email: null,
+                    photo: null,
+                    phone: null,
+                    bio: null
+                });
+                // Navigate to sign in page
+                navigate('/signin');
             }
         } catch (error) {
             console.error('Error changing password:', error);

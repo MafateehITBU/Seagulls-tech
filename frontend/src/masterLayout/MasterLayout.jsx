@@ -443,7 +443,7 @@ const MasterLayout = ({ children }) => {
                         </h6>
                       </div>
                       <span className='text-primary-600 fw-semibold text-lg w-40-px h-40-px rounded-circle bg-base d-flex justify-content-center align-items-center'>
-                        05
+                        01
                       </span>
                     </div>
                     <div className='max-h-400-px overflow-y-auto scroll-sm pe-4'>
@@ -471,14 +471,6 @@ const MasterLayout = ({ children }) => {
                         <span className='text-sm text-secondary-light flex-shrink-0'>
                           23 Mins ago
                         </span>
-                      </Link>
-                    </div>
-                    <div className='text-center py-12 px-16'>
-                      <Link
-                        to='#'
-                        className='text-primary-600 fw-semibold text-md'
-                      >
-                        See All Notification
                       </Link>
                     </div>
                   </div>

@@ -12,7 +12,7 @@ import ReportEditModal from '../modals/Technician/ReportEditModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-30"
+        className="form-control"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
         placeholder="Search Maintenance Tickets..."
@@ -258,16 +258,19 @@ const TechMaintLayer = () => {
     return (
         <div className="card basic-data-table">
             <ToastContainer />
-            <div className="card-header d-flex justify-content-between align-items-center flex-wrap">
-                <h5 className='card-title mb-0'>Maintenance Tickets</h5>
-
+            <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                <h5 className='card-title mb-0  flex-shrink-0 w-35 w-md-100 w-sm-100'>Maintenance Tickets</h5>
+                <div className="w-35 w-md-100 wd-sm-100">
                 <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
+                </div>
+                <div className="w-35 w-md-100 w-sm-100">
                 <button
                     className="btn btn-success ml-3"
                     onClick={() => setShowModal(true)}
                 >
-                    + Create New Ticket
+                Create New Ticket
                 </button>
+                </div>
             </div>
             <div className="card-body">
                 {tickets.length === 0 ? (
