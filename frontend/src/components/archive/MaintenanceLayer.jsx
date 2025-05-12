@@ -77,20 +77,9 @@ const MaintenanceLayer = () => {
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
         },
         {
-            Header: 'Approved',
-            accessor: row => row.ticketId?.approved,
-            Cell: ({ value }) => (
-                <span className={`badge ${value ? 'bg-success' : 'bg-danger'}`}>
-                    {value ? 'Approved' : 'Not Approved'}
-                </span>
-            ),
-        },
-        {
-            Header: 'Status',
-            accessor: row => row.ticketId?.status,
-            Cell: ({ row }) => {
-                return (<span className="badge bg-success">{row.original.ticketId.status}</span>)
-            },
+            Header: 'Spare Parts',
+            accessor: row => row?.spareParts || '—',
+            Cell: ({ value }) => <div style={{ width: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{value}</div>,
         },
         {
             Header: 'Report',
@@ -114,6 +103,22 @@ const MaintenanceLayer = () => {
                         <Icon icon="mdi:clipboard-text" />
                     </span>
                 ) : '—';
+            },
+        },
+        {
+            Header: 'Approved',
+            accessor: row => row.ticketId?.approved,
+            Cell: ({ value }) => (
+                <span className={`badge ${value ? 'bg-success' : 'bg-danger'}`}>
+                    {value ? 'Approved' : 'Not Approved'}
+                </span>
+            ),
+        },
+        {
+            Header: 'Status',
+            accessor: row => row.ticketId?.status,
+            Cell: ({ row }) => {
+                return (<span className="badge bg-success">{row.original.ticketId.status}</span>)
             },
         },
         {

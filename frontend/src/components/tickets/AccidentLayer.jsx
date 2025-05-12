@@ -139,6 +139,53 @@ const AccidentLayer = () => {
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
         },
         {
+            Header: 'Spare Parts',
+            accessor: row => row?.spareParts || '—',
+            Cell: ({ value }) => <div style={{ width: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{value}</div>,
+        },
+        {
+            Header: 'Report',
+            accessor: row => row.reportId,
+            Cell: ({ row }) => {
+                const report = row.original.reportId;
+                return report ? (
+                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                ) : '—';
+            },
+        },
+        {
+            Header: 'Croca',
+            accessor: row => row.croca,
+            Cell: ({ row }) => {
+                const croca = row.original.croca;
+                return croca ? (
+                    <span
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => {
+                            setSelectedCroca(croca);
+                            setShowCrocaModal(true);
+                        }}
+                    >
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                ) : '—';
+            },
+        },
+        {
+            Header: 'Reject Report',
+            accessor: row => row.rejectReportId,
+            Cell: ({ row }) => {
+                const report = row.original.rejectReportId;
+                return report ? (
+                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                ) : '—';
+            },
+        },
+        {
             Header: 'Approved',
             accessor: row => row.ticketId?.approved,
             Cell: ({ row }) => {
@@ -232,48 +279,6 @@ const AccidentLayer = () => {
             },
         },
         {
-            Header: 'Report',
-            accessor: row => row.reportId,
-            Cell: ({ row }) => {
-                const report = row.original.reportId;
-                return report ? (
-                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
-                        <Icon icon="mdi:clipboard-text" />
-                    </span>
-                ) : '—';
-            },
-        },
-        {
-            Header: 'Croca',
-            accessor: row => row.croca,
-            Cell: ({ row }) => {
-                const croca = row.original.croca;
-                return croca ? (
-                    <span
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => {
-                            setSelectedCroca(croca);
-                            setShowCrocaModal(true);
-                        }}
-                    >
-                        <Icon icon="mdi:clipboard-text" />
-                    </span>
-                ) : '—';
-            },
-        },
-        {
-            Header: 'Reject Report',
-            accessor: row => row.rejectReportId,
-            Cell: ({ row }) => {
-                const report = row.original.rejectReportId;
-                return report ? (
-                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
-                        <Icon icon="mdi:clipboard-text" />
-                    </span>
-                ) : '—';
-            },
-        },
-        {
             Header: 'Delete',
             Cell: ({ row }) => (
                 <button
@@ -301,31 +306,31 @@ const AccidentLayer = () => {
         useGlobalFilter,
         useSortBy,
         usePagination
-    ); 
+    );
 
     return (
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-           
-                    <h5 className='card-title mb-0  flex-shrink-0 w-35 w-md-100 w-sm-100'>Accident Tickets</h5>
-                   
-                        <div className="w-35 w-md-100 wd-sm-100">
-                            <GlobalFilter
-                                globalFilter={globalFilter}
-                                setGlobalFilter={setGlobalFilter}
-                                className="form-control"
-                            />
-                        </div>
-                        <div className="w-35 w-md-100 w-sm-100">
-                            <button
-                                className="btn btn-success w-100 w-md-auto"
-                                onClick={() => setShowModal(true)}
-                            >
-                                <span className="ms-1">Create New Ticket</span>
-                            </button>
-                      
-                 
+
+                <h5 className='card-title mb-0  flex-shrink-0 w-35 w-md-100 w-sm-100'>Accident Tickets</h5>
+
+                <div className="w-35 w-md-100 wd-sm-100">
+                    <GlobalFilter
+                        globalFilter={globalFilter}
+                        setGlobalFilter={setGlobalFilter}
+                        className="form-control"
+                    />
+                </div>
+                <div className="w-35 w-md-100 w-sm-100">
+                    <button
+                        className="btn btn-success w-100 w-md-auto"
+                        onClick={() => setShowModal(true)}
+                    >
+                        <span className="ms-1">Create New Ticket</span>
+                    </button>
+
+
                 </div>
             </div>
             <div className="card-body p-0">

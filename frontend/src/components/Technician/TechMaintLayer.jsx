@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
 import CreateTicketModal from '../modals/Technician/CreateTicketModal';
 import AssetMoreInfoModal from '../modals/Technician/AssetMoreInfoModal';
+import SparePartsModal from '../modals/Technician/SparePartsModal';
 import AddReportModal from '../modals/Technician/AddReportModal';
 import ReportEditModal from '../modals/Technician/ReportEditModal';
 
@@ -27,6 +28,9 @@ const TechMaintLayer = () => {
     const [status, setStatus] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState(null);
+    const [selectedSpareParts, setSelectedSpareParts] = useState(null);
+    const [requireSpareParts, setRequireSpareParts] = useState(false);
+    const [showSparePartsModal, setShowSparePartsModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
     const [selectedMaintId, setSelectedMaintId] = useState(null);
 
@@ -77,6 +81,13 @@ const TechMaintLayer = () => {
         }
     };
 
+    const handleShowSpareParts = (maintId, spareParts, requireSpareParts) => {
+        setSelectedMaintId(maintId);
+        setSelectedSpareParts(spareParts);
+        setRequireSpareParts(requireSpareParts);
+        setShowSparePartsModal(true);
+    };
+
     const columns = React.useMemo(() => [
         {
             Header: 'Start',
@@ -125,6 +136,21 @@ const TechMaintLayer = () => {
                     {value}
                 </span>
             ),
+        },
+        {
+            Header: 'Spare Parts',
+            accessor: row => row?.spareParts,
+            Cell: ({ row }) => {
+                const spareParts = row.original.spareParts;
+                const requireSpareParts = row.original.requireSpareParts;
+                const maintId = row.original._id;
+
+                return spareParts ? (
+                    <span className='btn btn-sm btn-primary' onClick={() => handleShowSpareParts(maintId, spareParts, requireSpareParts)}>
+                        View
+                    </span>
+                ) : '—';
+            },
         },
         {
             Header: 'Report',
@@ -194,7 +220,7 @@ const TechMaintLayer = () => {
                 const ticket = row.original.ticketId;
                 const approved = ticket?.approved;
 
-                if (approved === null || approved === undefined || ( approved && !report)) {
+                if (approved === null || approved === undefined || (approved && !report)) {
                     return '-';
                 }
 
@@ -261,15 +287,15 @@ const TechMaintLayer = () => {
             <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                 <h5 className='card-title mb-0  flex-shrink-0 w-35 w-md-100 w-sm-100'>Maintenance Tickets</h5>
                 <div className="w-35 w-md-100 wd-sm-100">
-                <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
+                    <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
                 </div>
                 <div className="w-35 w-md-100 w-sm-100">
-                <button
-                    className="btn btn-success ml-3"
-                    onClick={() => setShowModal(true)}
-                >
-                Create New Ticket
-                </button>
+                    <button
+                        className="btn btn-success ml-3"
+                        onClick={() => setShowModal(true)}
+                    >
+                        Create New Ticket
+                    </button>
                 </div>
             </div>
             <div className="card-body">
@@ -327,6 +353,19 @@ const TechMaintLayer = () => {
                 <AssetMoreInfoModal
                     moreInfoAsset={selectedAsset}
                     closeModal={() => setSelectedAsset(null)}
+                />
+            )}
+
+            {/* Spare Parts Modal */}
+            {showSparePartsModal && (
+                <SparePartsModal
+                    show={showSparePartsModal}
+                    closeModal={() => setShowSparePartsModal(false)}
+                    ID={selectedMaintId}
+                    spareParts={selectedSpareParts}
+                    requireSpareParts={requireSpareParts}
+                    route="maintenance"
+                    fetchData={fetchData}
                 />
             )}
 

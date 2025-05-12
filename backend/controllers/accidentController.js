@@ -207,6 +207,10 @@ export const getAccidentTicketsTech = async (req, res) => {
                         select: 'assetName assetNo assetType location coordinates',
                     },
                 ],
+            })
+            .populate({
+                path: 'spareParts',
+                select: 'partName'
             });
 
         if (!accidents || accidents.length === 0) {
@@ -285,6 +289,65 @@ export const startAccident = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+/**-------------------------------------------
+ * @desc Update spare parts for an accident ticket
+ * @route PUT /api/accident/spareparts/:accidentId
+ * @access Private
+ * @role Tech
+ --------------------------------------------*/
+export const updateSpareParts = async (req, res) => {
+    try {
+        const { accidentId } = req.params;
+        const { requireSpareParts, spareParts } = req.body;
+        const techId = req.user.id;
+
+        // Check if user is a tech
+        if (req.user.position !== 'tech') {
+            return res.status(403).json({ message: "Only techs can update the required spare parts" });
+        }
+
+        // Find the accident
+        const accident = await Accident.findById(accidentId);
+        if (!accident) {
+            return res.status(404).json({ message: "Accident ticket not found" });
+        }
+
+        // Check if this tech is assigned to the ticket
+        const ticket = await Ticket.findById(accident.ticketId);
+        if (!ticket || ticket.assignedTo.toString() !== techId) {
+            return res.status(403).json({ message: "You are not assigned to this accident" });
+        }
+
+        // Update logic
+        if (requireSpareParts === false || requireSpareParts === 'false') {
+            accident.requireSpareParts = false;
+            accident.spareParts = [];
+        } else if (requireSpareParts === true || requireSpareParts === 'true') {
+            // Ensure spareParts is an array
+            let partsArray = Array.isArray(spareParts)
+                ? spareParts
+                : typeof spareParts === 'string'
+                    ? JSON.parse(spareParts)
+                    : [];
+
+            accident.requireSpareParts = true;
+            accident.spareParts = partsArray;
+        } else {
+            return res.status(400).json({ message: "Invalid value for requireSpareParts" });
+        }
+
+        await accident.save();
+
+        res.status(200).json({
+            message: "Spare parts updated successfully",
+            accident,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 /**------------------------------------------
  * @desc Add a report to a accident ticket by Tech

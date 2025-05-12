@@ -201,6 +201,10 @@ export const getMaintTicketsTech = async (req, res) => {
                         select: 'assetName assetNo assetType location coordinates',
                     },
                 ],
+            })
+            .populate({
+                path: 'spareParts',
+                select: 'partName'
             });
 
         if (!maints || maints.length === 0) {
@@ -340,6 +344,65 @@ export const startMaint = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+/**-------------------------------------------
+ * @desc Update spare parts for an maint ticket
+ * @route PUT /api/maintenance/spareparts/:maintId
+ * @access Private
+ * @role Tech
+ --------------------------------------------*/
+export const updateSpareParts = async (req, res) => {
+    try {
+        const { maintId } = req.params;
+        const { requireSpareParts, spareParts } = req.body;
+        const techId = req.user.id;
+
+        // Check if user is a tech
+        if (req.user.position !== 'tech') {
+            return res.status(403).json({ message: "Only techs can update the required spare parts" });
+        }
+
+        // Find the maint
+        const maint = await Maintenance.findById(maintId);
+        if (!maint) {
+            return res.status(404).json({ message: "maint ticket not found" });
+        }
+
+        // Check if this tech is assigned to the ticket
+        const ticket = await Ticket.findById(maint.ticketId);
+        if (!ticket || ticket.assignedTo.toString() !== techId) {
+            return res.status(403).json({ message: "You are not assigned to this maint" });
+        }
+
+        // Update logic
+        if (requireSpareParts === false || requireSpareParts === 'false') {
+            maint.requireSpareParts = false;
+            maint.spareParts = [];
+        } else if (requireSpareParts === true || requireSpareParts === 'true') {
+            // Ensure spareParts is an array
+            let partsArray = Array.isArray(spareParts)
+                ? spareParts
+                : typeof spareParts === 'string'
+                    ? JSON.parse(spareParts)
+                    : [];
+
+            maint.requireSpareParts = true;
+            maint.spareParts = partsArray;
+        } else {
+            return res.status(400).json({ message: "Invalid value for requireSpareParts" });
+        }
+
+        await maint.save();
+
+        res.status(200).json({
+            message: "Spare parts updated successfully",
+            maint,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 /**------------------------------------------
  * @desc Add a report to a maintenance ticket by Tech

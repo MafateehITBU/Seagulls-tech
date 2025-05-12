@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
 import CreateTicketModal from '../modals/Technician/CreateTicketModal';
 import AssetMoreInfoModal from '../modals/Technician/AssetMoreInfoModal';
+import SparePartsModal from '../modals/Technician/SparePartsModal.jsx';
 import AddReportModal from '../modals/Technician/AddReportModal';
 import ReportEditModal from '../modals/Technician/ReportEditModal';
 import AddCrocaModal from '../modals/Technician/addCrocaModal';
@@ -32,6 +33,9 @@ const TechAccidentLayer = () => {
     const [status, setStatus] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState(null);
+    const [selectedSpareParts, setSelectedSpareParts] = useState(null);
+    const [requireSpareParts, setRequireSpareParts] = useState(false);
+    const [showSparePartsModal, setShowSparePartsModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
     const [selectedAccidentId, setSelectedAccidentId] = useState(null);
 
@@ -80,6 +84,13 @@ const TechAccidentLayer = () => {
         } catch (error) {
             toast.error('Failed to close the ticket.', { position: "top-right" });
         }
+    };
+
+    const handleShowSpareParts = (accidentId, spareParts, requireSpareParts) => {
+        setSelectedAccidentId(accidentId);
+        setSelectedSpareParts(spareParts);
+        setRequireSpareParts(requireSpareParts);
+        setShowSparePartsModal(true);
     };
 
     const columns = React.useMemo(() => [
@@ -132,6 +143,21 @@ const TechAccidentLayer = () => {
             ),
         },
         {
+            Header: 'Spare Parts',
+            accessor: row => row?.spareParts,
+            Cell: ({ row }) => {
+                const spareParts = row.original.spareParts;
+                const requireSpareParts = row.original.requireSpareParts;
+                const accidentId = row.original._id;
+
+                return spareParts ? (
+                    <span className='btn btn-sm btn-primary' onClick={() => handleShowSpareParts( accidentId ,spareParts, requireSpareParts)}>
+                        View
+                    </span>
+                ) : '—';
+            },
+        },
+        {
             Header: 'Report',
             accessor: row => row.reportId,
             Cell: ({ row }) => {
@@ -152,7 +178,7 @@ const TechAccidentLayer = () => {
 
                 return (
                     <button
-                        className='btn btn-sm btn-primary'
+                        className='btn btn-sm btn-success'
                         onClick={() => {
                             if (!startTime) {
                                 toast.warn('Start Ticket!', { position: "top-right" });
@@ -304,16 +330,16 @@ const TechAccidentLayer = () => {
             <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                 <h5 className='card-title mb-0  flex-shrink-0 w-35 w-md-100 w-sm-100'>Accident Tickets</h5>
                 <div className="w-35 w-md-100 wd-sm-100">
-                <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
+                    <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
                 </div>
 
                 <div className="w-35 w-md-100 w-sm-100">
-                <button
-                    className="btn btn-success ml-3"
-                    onClick={() => setShowModal(true)}
-                >
-                    + Create New Ticket
-                </button>
+                    <button
+                        className="btn btn-success ml-3"
+                        onClick={() => setShowModal(true)}
+                    >
+                        + Create New Ticket
+                    </button>
                 </div>
             </div>
             <div className="card-body">
@@ -371,6 +397,19 @@ const TechAccidentLayer = () => {
                 <AssetMoreInfoModal
                     moreInfoAsset={selectedAsset}
                     closeModal={() => setSelectedAsset(null)}
+                />
+            )}
+
+            {/* Spare Parts Modal */}
+            {showSparePartsModal && (
+                <SparePartsModal
+                    show={showSparePartsModal}
+                    closeModal={() => setShowSparePartsModal(false)}
+                    ID={selectedAccidentId}
+                    spareParts={selectedSpareParts}
+                    requireSpareParts={requireSpareParts}
+                    route="accident"
+                    fetchData={fetchData}
                 />
             )}
 

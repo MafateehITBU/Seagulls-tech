@@ -6,6 +6,7 @@ import {
     addReportToMaint,
     addRejectReportToMaint,
     startMaint,
+    updateSpareParts,
     closeMaint,
     deleteMaint
 } from '../controllers/maintenanceController.js';
@@ -38,6 +39,7 @@ router.post
     ); // Add a reject report to a maintenance ticket
 router.put('/approve/:maintId', verifyToken, authorizePosition('admin', 'superadmin'), approveTechTicket); // Approve Tickets Created by Tech
 router.post('/tech/start/:maintId', verifyToken, authorizePosition('tech'), startMaint); // Start maintenance ticket
+router.put('/spareparts/:maintId', verifyToken, authorizePosition('tech'), updateSpareParts); // Update spare parts in a maint ticket
 router.post('/tech/close/:maintId', verifyToken, authorizePosition('tech'), closeMaint); // Close maintenance ticket
 router.delete('/:maintId', verifyToken, authorizePosition('admin', 'superadmin'), deleteMaint); // Delete a maintenance ticket
 

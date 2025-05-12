@@ -4,6 +4,7 @@ import {
     approveTechTicket,
     getAccidentTicketsTech,
     startAccident,
+    updateSpareParts,
     addReportToAccident,
     addRejectReportToAccident,
     addCrocaToAccident,
@@ -18,6 +19,7 @@ const router = express.Router();
 router.post('/', verifyToken, createAccidentTicket); // Create a new accident ticket
 router.get('/tech', verifyToken, authorizePosition('tech'), getAccidentTicketsTech); // Get all accident tickets assigned to a specific tech
 router.post('/tech/start/:accidentId', verifyToken, authorizePosition('tech'), startAccident); // Start accident ticket
+router.put('/spareparts/:accidentId', verifyToken, authorizePosition('tech'), updateSpareParts); // Update spare parts in an accident ticket
 router.post
     (
         '/tech/:accidentId',

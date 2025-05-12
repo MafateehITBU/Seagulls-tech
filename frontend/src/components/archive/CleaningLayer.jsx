@@ -77,13 +77,6 @@ const CleaningLayer = () => {
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
         },
         {
-            Header: 'Status',
-            accessor: row => row.ticketId?.status,
-            Cell: ({ row }) => {
-                return (<span className="badge bg-success"> {row.original.ticketId.status}</span>)
-            },
-        },
-        {
             Header: 'Report',
             accessor: row => row.reportId,
             Cell: ({ row }) => {
@@ -93,6 +86,13 @@ const CleaningLayer = () => {
                         <Icon icon="mdi:clipboard-text" />
                     </span>
                 ) : '—';
+            },
+        },
+        {
+            Header: 'Status',
+            accessor: row => row.ticketId?.status,
+            Cell: ({ row }) => {
+                return (<span className="badge bg-success"> {row.original.ticketId.status}</span>)
             },
         },
         {

@@ -136,6 +136,35 @@ const MaintenanceLayer = () => {
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
         },
         {
+            Header: 'Spare Parts',
+            accessor: row => row?.spareParts || '—',
+            Cell: ({ value }) => <div style={{ width: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{value}</div>,
+        },
+        {
+            Header: 'Report',
+            accessor: row => row.reportId,
+            Cell: ({ row }) => {
+                const report = row.original.reportId;
+                return report ? (
+                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                ) : '—';
+            },
+        },
+        {
+            Header: 'Reject Report',
+            accessor: row => row.rejectReportId,
+            Cell: ({ row }) => {
+                const report = row.original.rejectReportId;
+                return report ? (
+                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
+                        <Icon icon="mdi:clipboard-text" />
+                    </span>
+                ) : '—';
+            },
+        },
+        {
             Header: 'Approved',
             accessor: row => row.ticketId?.approved,
             Cell: ({ row }) => {
@@ -226,30 +255,6 @@ const MaintenanceLayer = () => {
                 ) : (
                     <span className="badge bg-success">Closed</span>
                 );
-            },
-        },
-        {
-            Header: 'Report',
-            accessor: row => row.reportId,
-            Cell: ({ row }) => {
-                const report = row.original.reportId;
-                return report ? (
-                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
-                        <Icon icon="mdi:clipboard-text" />
-                    </span>
-                ) : '—';
-            },
-        },
-        {
-            Header: 'Reject Report',
-            accessor: row => row.rejectReportId,
-            Cell: ({ row }) => {
-                const report = row.original.rejectReportId;
-                return report ? (
-                    <span style={{ cursor: 'pointer' }} onClick={() => setSelectedReport(report)}>
-                        <Icon icon="mdi:clipboard-text" />
-                    </span>
-                ) : '—';
             },
         },
         {
