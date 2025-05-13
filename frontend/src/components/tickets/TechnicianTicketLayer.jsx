@@ -17,9 +17,16 @@ const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
 
 const TechnicianTicketLayer = () => {
     const [tickets, setTickets] = useState([]);
+    const [selectedTicket, setSelectedTicket] = useState(null);
+    const [showModal, setShowModal] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState('all');
     const [selectedPriority, setSelectedPriority] = useState('all');
+    const [showNoteModal, setShowNoteModal] = useState(false);
+    const [noteText, setNoteText] = useState('');
+    const [ticketToApprove, setTicketToApprove] = useState(null);
+    const [approvalStatus, setApprovalStatus] = useState(false);
+
 
     useEffect(() => {
         fetchData();
@@ -36,7 +43,7 @@ const TechnicianTicketLayer = () => {
             const filterUnapproved = (data, type) => {
                 if (!Array.isArray(data)) return [];
                 return data
-                    .filter(ticket => ticket.ticketId?.techTicketApprove === false)
+                    .filter(ticket => ticket.ticketId?.techTicketApprove === null)
                     .map(ticket => ({ ...ticket, type }));
             };
 
@@ -69,12 +76,19 @@ const TechnicianTicketLayer = () => {
         });
     }, [tickets, selectedType, selectedPriority]);
 
-    const handleApprove = async (ticket) => {
+    const openNoteModal = (ticket, approval) => {
+        setTicketToApprove(ticket);
+        setApprovalStatus(approval);
+        setNoteText(''); // Reset the note
+        setShowNoteModal(true);
+    };
+
+    const handleApprove = async (ticket, techApproveNote) => {
         try {
             const { type, _id } = ticket;
 
             const endpoint = `/${type}/approve/${_id}`;
-            await axiosInstance.put(endpoint);
+            await axiosInstance.put(endpoint, { techTicketApprove: approvalStatus, techApproveNote });
 
             toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} ticket approved successfully`);
 
@@ -85,6 +99,7 @@ const TechnicianTicketLayer = () => {
             toast.error("Approval failed. Please try again.");
         }
     };
+    const closeModal = () => setSelectedTicket(null);
 
     const columns = React.useMemo(() => [
         {
@@ -118,18 +133,54 @@ const TechnicianTicketLayer = () => {
             Cell: ({ value }) => <div style={{ width: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{value}</div>,
         },
         {
+            Header: 'Spare Parts',
+            accessor: row => row?.spareParts || '—',
+            Cell: ({ value }) => <div style={{ width: '200px', whiteSpace: 'normal', wordBreak: 'break-word' }}>{value}</div>,
+        },
+        {
+            Header: 'Photo',
+            accessor: row => row.ticketId?.photo,
+            Cell: ({ value }) => (
+                <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => {
+                        setSelectedTicket({ ...selectedTicket, photo: value });
+                        setShowModal(true);
+                    }}
+                >
+                    View
+                </button>
+            ),
+        },
+        {
             Header: 'Created At',
             accessor: row => new Date(row.ticketId?.createdAt).toLocaleDateString(),
         },
         {
             Header: 'Approve',
             Cell: ({ row }) => (
-                <button
-                    className="btn btn-sm btn-success"
-                    onClick={() => handleApprove(row.original)}
-                >
-                    <Icon icon="mdi:thumb-up" />
-                </button>
+                <div className="dropdown">
+                    <span
+                        className="badge bg-secondary dropdown-toggle"
+                        data-bs-toggle="dropdown"
+                        role="button"
+                        style={{ cursor: 'pointer' }}
+                    >
+                        Take Action
+                    </span>
+                    <ul className="dropdown-menu">
+                        <li>
+                            <button className="dropdown-item" onClick={() => openNoteModal(row.original, true, noteText)}>
+                                Approve
+                            </button>
+                        </li>
+                        <li>
+                            <button className="dropdown-item" onClick={() => openNoteModal(row.original, false, noteText)}>
+                                Reject
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             ),
         },
     ], []);
@@ -157,7 +208,7 @@ const TechnicianTicketLayer = () => {
             <div className="card-header d-flex justify-content-between align-items-center">
                 <h5 className='card-title mb-0'>Technician Tickets</h5>
                 <div className="d-flex gap-2 position-relative">
-                    <button 
+                    <button
                         className="btn btn-outline-secondary position-relative"
                         onClick={() => setShowFilters(!showFilters)}
                     >
@@ -173,9 +224,9 @@ const TechnicianTicketLayer = () => {
                         <div className="position-absolute top-100 end-0 mt-2 p-3 bg-white border rounded shadow-sm" style={{ zIndex: 1000, minWidth: '250px' }}>
                             <div className="mb-3">
                                 <label className="form-label">Type</label>
-                                <select 
-                                    className="form-select" 
-                                    value={selectedType} 
+                                <select
+                                    className="form-select"
+                                    value={selectedType}
                                     onChange={handleTypeChange}
                                 >
                                     <option value="all">All Types</option>
@@ -186,9 +237,9 @@ const TechnicianTicketLayer = () => {
                             </div>
                             <div className="mb-3">
                                 <label className="form-label">Priority</label>
-                                <select 
-                                    className="form-select" 
-                                    value={selectedPriority} 
+                                <select
+                                    className="form-select"
+                                    value={selectedPriority}
                                     onChange={handlePriorityChange}
                                 >
                                     <option value="all">All Priorities</option>
@@ -198,7 +249,7 @@ const TechnicianTicketLayer = () => {
                                 </select>
                             </div>
                             <div className="d-flex justify-content-end">
-                                <button 
+                                <button
                                     className="btn btn-sm btn-secondary me-2"
                                     onClick={() => {
                                         setSelectedType('all');
@@ -208,7 +259,7 @@ const TechnicianTicketLayer = () => {
                                 >
                                     Clear
                                 </button>
-                                <button 
+                                <button
                                     className="btn btn-sm btn-primary"
                                     onClick={() => setShowFilters(false)}
                                 >
@@ -282,6 +333,71 @@ const TechnicianTicketLayer = () => {
                     ))}
                 </div>
             </div>
+
+            {showNoteModal && (
+                <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Add Note for Approval</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowNoteModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <textarea
+                                    className="form-control"
+                                    rows="4"
+                                    placeholder="Enter your note here..."
+                                    value={noteText}
+                                    onChange={(e) => setNoteText(e.target.value)}
+                                />
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn btn-secondary" onClick={() => setShowNoteModal(false)}>
+                                    Cancel
+                                </button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        handleApprove(ticketToApprove, noteText);
+                                        setShowNoteModal(false);
+                                    }}
+                                >
+                                    Submit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal for Photo*/}
+            {selectedTicket && (
+                <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Photo</h5>
+                                <button type="button" className="btn-close" onClick={closeModal}></button>
+                            </div>
+                            <div className="modal-body d-flex flex-column">
+                                {selectedTicket.photo ? (
+                                    <img
+                                        src={selectedTicket.photo}
+                                        alt="Asset"
+                                        style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }}
+                                        className='align-self-center'
+                                    />
+                                ) : (
+                                    <div>No photo available.</div>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={closeModal}>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

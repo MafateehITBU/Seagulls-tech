@@ -27,7 +27,7 @@ export const createMaintenanceTicket = async (req, res) => {
             return res.status(400).json({ message: "Please fill all required fields" });
         }
 
-        let techTicketApprove = false;
+        let techTicketApprove = null;
         let ticketPhoto = null;
         // Validate the opener
         if (openedByModel === 'Tech') {
@@ -141,6 +141,7 @@ export const createMaintenanceTicket = async (req, res) => {
 export const approveTechTicket = async (req, res) => {
     try {
         const maintId = req.params.maintId;
+        const {techTicketApprove ,techApproveNote} = req.body;
 
         // check if the maint ticket exists
         const maint = await Maintenance.findById(maintId);
@@ -156,7 +157,9 @@ export const approveTechTicket = async (req, res) => {
             return res.status(404).json({ message: "Ticket not found" });
         }
 
-        ticket.techTicketApprove = true;
+        ticket.techTicketApprove = techTicketApprove;
+        ticket.techApproveNote = techApproveNote;
+        ticket.status = 'Open';
         await ticket.save();
 
         // Generate a unique notifID
@@ -197,7 +200,7 @@ export const getMaintTicketsTech = async (req, res) => {
         const maints = await Maintenance.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId rejectReportId description status openedByModel startTime endTime timer techTicketApprove approved rejectionReason',
+                select: 'openedBy assignedTo priority assetId rejectReportId description status openedByModel startTime endTime timer techTicketApprove techApproveNote approved rejectionReason photo',
                 populate: [
                     {
                         path: 'openedBy',

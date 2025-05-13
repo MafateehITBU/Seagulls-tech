@@ -35,7 +35,10 @@ const TechCleaningLayer = () => {
     const fetchData = async () => {
         try {
             const response = await axiosInstance.get('/cleaning/tech');
-            setTickets(response.data);
+            // Filter tickets where techTicketApprove is true
+            const filteredData = response.data.filter(item => item.ticketId?.techTicketApprove === true);
+
+            setTickets(filteredData);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -43,7 +46,7 @@ const TechCleaningLayer = () => {
 
     const handleStart = async (cleaning) => {
         if (!cleaning?.ticketId?.techTicketApprove) {
-           return toast.error('Wait for admin approval to start the ticket!', { position: "top-right" });
+            return toast.error('Wait for admin approval to start the ticket!', { position: "top-right" });
         }
         try {
             await axiosInstance.post(`/cleaning/tech/start/${cleaning._id}`);
@@ -70,6 +73,33 @@ const TechCleaningLayer = () => {
     }
 
     const columns = React.useMemo(() => [
+        {
+            Header: 'Approval',
+            accessor: row => row.ticketId?.techApproveNote,
+            Cell: ({ row: { original } }) => {
+                const { techTicketApprove, techApproveNote } = original.ticketId || {};
+
+                if (techTicketApprove === true) {
+                    return (
+                        <div className="d-flex flex-column">
+                            <span className="badge bg-success">Approved</span>
+                            <span>{techApproveNote || '-'}</span>
+                        </div>
+                    );
+                }
+
+                if (techTicketApprove === false) {
+                    return (
+                        <div className="d-flex flex-column">
+                            <span className="badge bg-danger">Rejected</span>
+                            <span>{techApproveNote || '-'}</span>
+                        </div>
+                    );
+                }
+
+                return '-';
+            }
+        },
         {
             Header: 'Start',
             Cell: ({ row }) => {
@@ -191,15 +221,15 @@ const TechCleaningLayer = () => {
             <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                 <h5 className='card-title mb-0  flex-shrink-0 w-35 w-md-100 w-sm-100'>Cleaning Tickets</h5>
                 <div className="w-35 w-md-100 wd-sm-100">
-                <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />                </div>
+                    <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />                </div>
 
                 <div className="w-35 w-md-100 w-sm-100">
-                <button
-                    className="btn btn-success ml-3"
-                    onClick={() => setShowModal(true)}
-                >
-                Create New Ticket
-                </button>
+                    <button
+                        className="btn btn-success ml-3"
+                        onClick={() => setShowModal(true)}
+                    >
+                        Create New Ticket
+                    </button>
                 </div>
             </div>
 

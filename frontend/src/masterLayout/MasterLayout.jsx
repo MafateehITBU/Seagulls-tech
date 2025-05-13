@@ -411,7 +411,7 @@ const MasterLayout = ({ children }) => {
                     className={(navData) => (navData.isActive ? "active-page" : "")}
                   >
                     <Icon
-                      icon='line-md:account'
+                      icon='line-md:car-light-alert-twotone'
                       className='menu-icon'
                     />
                     <span>Accident Tickets</span>
@@ -425,7 +425,7 @@ const MasterLayout = ({ children }) => {
                     className={(navData) => (navData.isActive ? "active-page" : "")}
                   >
                     <Icon
-                      icon='line-md:account'
+                      icon='line-md:water-twotone'
                       className='menu-icon'
                     />
                     <span>Cleaning Tickets</span>
@@ -443,6 +443,20 @@ const MasterLayout = ({ children }) => {
                       className='menu-icon'
                     />
                     <span>Maintenance Tickets</span>
+                  </NavLink>
+                </li>
+
+                {/* rejected-tickets */}
+                <li>
+                  <NavLink
+                    to='/tech/rejected-tickets'
+                    className={(navData) => (navData.isActive ? "active-page" : "")}
+                  >
+                    <Icon
+                      icon='line-md:document-delete-twotone'
+                      className='menu-icon'
+                    />
+                    <span>Rejected Tickets</span>
                   </NavLink>
                 </li>
 

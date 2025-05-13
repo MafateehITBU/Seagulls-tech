@@ -46,7 +46,11 @@ const TechAccidentLayer = () => {
     const fetchData = async () => {
         try {
             const response = await axiosInstance.get('/accident/tech');
-            setTickets(response.data);
+
+            // Filter tickets where techTicketApprove is true
+            const filteredData = response.data.filter(item => item.ticketId?.techTicketApprove === true);
+
+            setTickets(filteredData);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -94,6 +98,33 @@ const TechAccidentLayer = () => {
     };
 
     const columns = React.useMemo(() => [
+        {
+            Header: 'Approval',
+            accessor: row => row.ticketId?.techApproveNote,
+            Cell: ({ row: { original } }) => {
+                const { techTicketApprove, techApproveNote } = original.ticketId || {};
+
+                if (techTicketApprove === true) {
+                    return (
+                        <div className="d-flex flex-column">
+                            <span className="badge bg-success">Approved</span>
+                            <span>{techApproveNote || '-'}</span>
+                        </div>
+                    );
+                }
+
+                if (techTicketApprove === false) {
+                    return (
+                        <div className="d-flex flex-column">
+                            <span className="badge bg-danger">Rejected</span>
+                            <span>{techApproveNote || '-'}</span>
+                        </div>
+                    );
+                }
+
+                return '-';
+            }
+        },
         {
             Header: 'Start',
             Cell: ({ row }) => {
@@ -151,7 +182,7 @@ const TechAccidentLayer = () => {
                 const accidentId = row.original._id;
 
                 return spareParts ? (
-                    <span className='btn btn-sm btn-primary' onClick={() => handleShowSpareParts( accidentId ,spareParts, requireSpareParts)}>
+                    <span className='btn btn-sm btn-primary' onClick={() => handleShowSpareParts(accidentId, spareParts, requireSpareParts)}>
                         View
                     </span>
                 ) : '—';
@@ -231,7 +262,7 @@ const TechAccidentLayer = () => {
             },
         },
         {
-            Header: 'Approved',
+            Header: 'Status',
             accessor: row => row.ticketId?.approved,
             Cell: ({ row }) => {
                 const ticket = row.original.ticketId;

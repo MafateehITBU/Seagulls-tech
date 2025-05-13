@@ -28,7 +28,7 @@ export const createAccidentTicket = async (req, res) => {
             return res.status(400).json({ message: "Please fill all required fields" });
         }
 
-        let techTicketApprove = false;
+        let techTicketApprove = null;
         let ticketPhoto = null;
         // Validate the opener
         if (openedByModel === 'Tech') {
@@ -147,6 +147,7 @@ export const createAccidentTicket = async (req, res) => {
 export const approveTechTicket = async (req, res) => {
     try {
         const accidentId = req.params.accidentId;
+        const { techTicketApprove, techApproveNote} = req.body;
 
         // check if the accident ticket exists
         const accident = await Accident.findById(accidentId);
@@ -162,7 +163,9 @@ export const approveTechTicket = async (req, res) => {
             return res.status(404).json({ message: "Ticket not found" });
         }
 
-        ticket.techTicketApprove = true;
+        ticket.techTicketApprove = techTicketApprove;
+        ticket.techApproveNote = techApproveNote || "No note provided";
+        ticket.status = 'Open';
         await ticket.save();
 
         // Generate a unique notifID
@@ -203,7 +206,7 @@ export const getAccidentTicketsTech = async (req, res) => {
         const accidents = await Accident.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel startTime endTime timer techTicketApprove approved rejectionReason rejectReportId',
+                select: 'openedBy assignedTo priority assetId description status openedByModel startTime endTime timer techTicketApprove techApproveNote approved rejectionReason rejectReportId photo',
                 populate: [
                     {
                         path: 'openedBy',

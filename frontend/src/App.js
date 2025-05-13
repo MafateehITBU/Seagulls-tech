@@ -18,6 +18,7 @@ import SparePartPage from "./pages/SaprePartPage";
 import AssetDetailsPage from "./pages/AssetDetailsPage";
 import HomePage from './pages/Technician/HomePage';
 import TechnicianTicketPage from "./pages/tickets/TechnicianTicketPage";
+import RejectedTicketsPage from "./pages/Technician/RejectedTicketsPage";
 
 import AdminsPage from "./pages/AdminsPage";
 function App() {
@@ -152,6 +153,15 @@ function App() {
           element={
             <ProtectedRoute allowedPositions={['tech']}>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tech/rejected-tickets"
+          element={
+            <ProtectedRoute allowedPositions={['tech']}>
+              <RejectedTicketsPage />
             </ProtectedRoute>
           }
         />

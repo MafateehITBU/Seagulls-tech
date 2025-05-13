@@ -33,7 +33,7 @@ export const createCleaningTicket = async (req, res) => {
             return res.status(404).json({ message: "Asset not found" });
         }
 
-        let techTicketApprove = false;
+        let techTicketApprove = null;
         let ticketPhoto = null;
         // check if the openedBy exists in the database
         if (openedByModel === 'Tech') {
@@ -132,6 +132,7 @@ export const createCleaningTicket = async (req, res) => {
 export const approveTechTicket = async (req, res) => {
     try {
         const cleaningId = req.params.cleaningId;
+        const {techTicketApprove, techApproveNote} = req.body;
 
         // check if the cleaning ticket exists
         const cleaning = await Cleaning.findById(cleaningId);
@@ -147,7 +148,9 @@ export const approveTechTicket = async (req, res) => {
             return res.status(404).json({ message: "Ticket not found" });
         }
 
-        ticket.techTicketApprove = true;
+        ticket.techTicketApprove = techTicketApprove;
+        ticket.techApproveNote = techApproveNote || "No note provided";
+        ticket.status = 'Open';
         await ticket.save();
 
         // Generate a unique notifID
@@ -187,7 +190,7 @@ export const getCleaningTicketsByTech = async (req, res) => {
         const cleanings = await Cleaning.find({ status: { $in: ['Pending', 'Open', 'In Progress'] } })
             .populate({
                 path: 'ticketId',
-                select: 'openedBy assignedTo priority assetId description status openedByModel startTime endTime timer techTicketApprove',
+                select: 'openedBy assignedTo priority assetId description status openedByModel startTime endTime timer techTicketApprove techApproveNote photo',
                 populate: [
                     {
                         path: 'openedBy',

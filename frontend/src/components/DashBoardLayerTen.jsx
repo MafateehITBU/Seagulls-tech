@@ -12,6 +12,12 @@ const DashBoardLayerTen = () => {
       <UnitCountSeven />
 
 
+      {/* OverallReport */}
+      <OverallReport />
+
+      {/* PurchaseAndSales */}
+      <PurchaseAndSales />
+
       {/* UsersChart */}
       <UsersChart />
 
@@ -19,13 +25,7 @@ const DashBoardLayerTen = () => {
       {/* TopCustomer */}
       <TopCustomer />
 
-      {/* OverallReport */}
-      <OverallReport />
 
-      {/* PurchaseAndSales */}
-      <PurchaseAndSales />
-
-    
     </div>
   );
 };
