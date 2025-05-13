@@ -200,14 +200,36 @@ const CreateMaintTicketModal = ({ show, handleClose, fetchData, type }) => {
                                     const selected = Array.from(e.target.selectedOptions, option => option.value);
                                     setRequiredSpareParts(selected.map(String));
                                 }}
-                                style={{ height: '80px', overflowY: 'auto' }}
+                                style={{
+                                    height: '120px',
+                                    overflowY: 'auto',
+                                    padding: '8px',
+                                    border: '1px solid #ced4da',
+                                    borderRadius: '4px',
+                                    backgroundColor: '#fff'
+                                }}
                             >
                                 {spareParts.map((part) => (
-                                    <option key={part._id} value={part._id}>
+                                    <option 
+                                        key={part._id} 
+                                        value={part._id}
+                                        style={{
+                                            padding: '8px',
+                                            margin: '2px 0',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            backgroundColor: requiredSpareParts.includes(part._id) ? '#e3f2fd' : 'transparent',
+                                            color: requiredSpareParts.includes(part._id) ? '#1976d2' : '#212529',
+                                            fontWeight: requiredSpareParts.includes(part._id) ? '500' : 'normal'
+                                        }}
+                                    >
                                         {part.partName}
                                     </option>
                                 ))}
                             </select>
+                            <div className="mt-2" style={{ fontSize: '0.875rem', color: '#6c757d' }}>
+                                Hold Ctrl (Windows) or Command (Mac) to select multiple parts
+                            </div>
                         </Form.Group>
                     )}
 
