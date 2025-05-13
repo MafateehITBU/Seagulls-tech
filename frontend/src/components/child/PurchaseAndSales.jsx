@@ -203,8 +203,8 @@ const PurchaseAndSales = () => {
             </select>
           </div>
         </div>
-        <div className='card-body p-24'>
-          <div id='ticketTimeChart' className='margin-16-minus y-value-left'>
+        <div className='card-body p-24 d-flex align-items-center justify-content-center'>
+          <div id='ticketTimeChart' style={{ width: '100%', maxWidth: '800px' }}>
             <ReactApexChart
               options={chartOptions}
               series={chartData.series}
