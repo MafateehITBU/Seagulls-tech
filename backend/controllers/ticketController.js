@@ -250,7 +250,7 @@ export const getAccidentTickets = async (req, res) => {
                 populate: [
                     { path: 'assignedTo', select: 'name' },
                     { path: 'openedBy', select: 'name' },
-                    { path: 'assetId', select: 'assetName' },
+                    { path: 'timer', select: 'timer' }
                 ]
             })
             .populate('reportId')
