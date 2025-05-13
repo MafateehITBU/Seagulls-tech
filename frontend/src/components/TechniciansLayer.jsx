@@ -32,12 +32,26 @@ const TechniciansLayer = () => {
 
     const fetchTechnicians = async () => {
         try {
-            const response = await axiosInstance.get('/tech');
-            setTechnicians(response.data.techs);
+            const [techsRes, ticketsRes] = await Promise.all([
+                axiosInstance.get('/tech'),
+                axiosInstance.get('/ticket/tech')
+            ]);
+
+            const ticketCounts = ticketsRes.data;
+
+            const mergedData = techsRes.data.techs.map(tech => {
+                const match = ticketCounts.find(ticket => ticket.id === tech._id);
+                return {
+                    ...tech,
+                    closedTicketsCount: match ? match.closedTicketsCount : 0
+                };
+            });
+
+            setTechnicians(mergedData);
             setLoading(false);
         } catch (error) {
-            console.error('Error fetching technicians:', error);
-            toast.error('Failed to fetch technicians');
+            console.error('Error fetching data:', error);
+            toast.error('Failed to fetch data');
             setLoading(false);
         }
     };
@@ -90,6 +104,11 @@ const TechniciansLayer = () => {
             Cell: ({ value }) => new Date(value).toLocaleDateString(),
         },
         {
+            Header: 'Closed Tickets',
+            accessor: 'closedTicketsCount',
+            Cell: ({ value }) => <span>{value}</span>,
+        },        
+        {
             Header: 'Actions',
             Cell: ({ row }) => (
                 <div className="d-flex gap-2">
@@ -137,7 +156,7 @@ const TechniciansLayer = () => {
                         className="btn btn-success w-100 w-md-auto"
                         onClick={handleAddTechnician}
                     >
-                        
+
                         <span className="ms-1">Add New Technician</span>
                     </button>
                 </div>

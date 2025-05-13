@@ -10,6 +10,7 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
     const [assets, setAssets] = useState([]);
     const [assetType, setAssetType] = useState('');  // New state for Asset Type
     const [location, setLocation] = useState('');    // New state for Location
+    const [ticketPhoto, setTicketPhoto] = useState(null);
 
     useEffect(() => {
         fetchAssets();
@@ -47,27 +48,35 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const ticketData = {
-            priority,
-            assetId,
-            description
-        };
+        if (!ticketPhoto) {
+            toast.error("Please upload a ticket photo.", { position: "top-right" });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("priority", priority);
+        formData.append("assetId", assetId);
+        formData.append("description", description);
+        formData.append("ticketPhoto", ticketPhoto);
 
         try {
-            await axiosInstance.post('/cleaning', ticketData);
-            toast.success('Ticket created successfully!', { position: "top-right" });
-            fetchData();  // Refresh the ticket list
-            resetForm();  // Clear the form
-            handleClose(); // Close the modal after success
+            await axiosInstance.post('/cleaning', formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            toast.success("Ticket created successfully!", { position: "top-right" });
+            fetchData();
+            resetForm();
+            handleClose();
         } catch (error) {
             const backendMessage = error.response?.data?.message || error.message;
-            toast.error('Failed to create the ticket. ' + backendMessage, { position: "top-right" });
+            toast.error("Failed to create the ticket. " + backendMessage, { position: "top-right" });
         }
     };
 
-
     return (
-        <Modal show={show} onHide={handleClose}>
+        <Modal show={show} onHide={handleClose} scrollable>
             <Modal.Header closeButton>
                 <Modal.Title className="h5">Create New Cleaning Ticket</Modal.Title>
             </Modal.Header>
@@ -135,6 +144,16 @@ const CreateCleaningTicketModal = ({ show, handleClose, fetchData }) => {
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             required
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="ticketPhoto">
+                        <Form.Label>Upload Ticket Photo</Form.Label>
+                        <Form.Control
+                            type="file"
+                            accept="image/*"
+                            required
+                            onChange={(e) => setTicketPhoto(e.target.files[0])}
                         />
                     </Form.Group>
 

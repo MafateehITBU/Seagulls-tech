@@ -13,6 +13,8 @@ const CreateMaintModal = ({ show, handleClose, fetchData, type }) => {
     const [requireSpare, setRequireSpare] = useState(false);
     const [spareParts, setSpareParts] = useState([]);
     const [requiredSpareParts, setRequiredSpareParts] = useState([]);
+    const [ticketPhoto, setTicketPhoto] = useState(null);
+
 
     useEffect(() => {
         fetchAssets();
@@ -61,28 +63,42 @@ const CreateMaintModal = ({ show, handleClose, fetchData, type }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const ticketData = {
-            priority,
-            assetId,
-            description,
-            requireSpareParts: requireSpare,
-            ...(requireSpare && { spareParts: requiredSpareParts })
-        };
+        if (!ticketPhoto) {
+            toast.error("Please upload a ticket photo.", { position: "top-right" });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("priority", priority);
+        formData.append("assetId", assetId);
+        formData.append("description", description);
+        formData.append("requireSpareParts", requireSpare);
+        formData.append("ticketPhoto", ticketPhoto);
+
+        if (requireSpare) {
+            requiredSpareParts.forEach(partId => {
+                formData.append("spareParts[]", partId);
+            });
+        }
 
         try {
-            await axiosInstance.post(`/${type}`, ticketData);
-            toast.success('Ticket created successfully!', { position: "top-right" });
+            await axiosInstance.post(`/${type}`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            toast.success("Ticket created successfully!", { position: "top-right" });
             fetchData();
             resetForm();
             handleClose();
         } catch (error) {
             const backendMessage = error.response?.data?.message || error.message;
-            toast.error('Failed to create the ticket. ' + backendMessage, { position: "top-right" });
+            toast.error("Failed to create the ticket. " + backendMessage, { position: "top-right" });
         }
     };
 
     return (
-        <Modal show={show} onHide={handleClose}>
+        <Modal show={show} onHide={handleClose} scrollable >
             <Modal.Header closeButton>
                 <Modal.Title className="h5">Create New Ticket</Modal.Title>
             </Modal.Header>
@@ -191,6 +207,16 @@ const CreateMaintModal = ({ show, handleClose, fetchData, type }) => {
                             required
                         />
                     </Form.Group>
+                    <Form.Group controlId="ticketPhoto">
+                        <Form.Label>Upload Photo</Form.Label>
+                        <Form.Control
+                            type="file"
+                            accept="image/*"
+                            required
+                            onChange={(e) => setTicketPhoto(e.target.files[0])}
+                        />
+                    </Form.Group>
+
 
                     <Button variant="primary" type="submit" className='mt-4 align-self-center' style={{ width: "150px" }}>
                         Create Ticket

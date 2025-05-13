@@ -201,8 +201,8 @@ const TechAccidentLayer = () => {
 
                 // Check if croca exists and is still default
                 const isCrocaDefault = croca &&
-                    croca.crocaType === 'Croca' &&
-                    croca.cost === '0' &&
+                    croca.crocaType === null &&
+                    croca.cost === null &&
                     croca.photo === null;
 
                 if (isCrocaDefault) {

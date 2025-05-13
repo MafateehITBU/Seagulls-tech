@@ -54,6 +54,9 @@ const ticketSchema = new mongoose.Schema({
     },
     rejectionReason:{
         type: String,
+    },
+    photo: {
+        type: String,
     }
 }, { timestamps: true })
 

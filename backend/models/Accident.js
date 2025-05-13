@@ -36,6 +36,10 @@ const accidentSchema = new mongoose.Schema({
             type: String,
         }
     },
+    documents: {
+        type: Boolean,
+        default: false,
+    },
     status: {
         type: String,
         enum: ['Pending', 'Open', 'In Progress', 'Closed'],

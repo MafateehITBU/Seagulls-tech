@@ -28,10 +28,20 @@ export const createMaintenanceTicket = async (req, res) => {
         }
 
         let techTicketApprove = false;
+        let ticketPhoto = null;
         // Validate the opener
         if (openedByModel === 'Tech') {
             const tech = await Tech.findById(openedBy);
             if (!tech) return res.status(400).json({ message: "Invalid Tech ID" });
+            // check is the tech uploaded a photo
+            if (!req.file) {
+                return res.status(400).json({ message: "Photo is required" });
+            }
+            // Upload photo
+            const photoPath = req.file.path;
+            const photoUrl = await uploadToCloudinary(photoPath);
+            fs.unlinkSync(photoPath); // remove local file
+            ticketPhoto = photoUrl;
         } else if (openedByModel === 'Admin') {
             const admin = await Admin.findById(openedBy);
             techTicketApprove = true;
@@ -74,6 +84,7 @@ export const createMaintenanceTicket = async (req, res) => {
             assetId,
             description: description || "No description provided",
             techTicketApprove,
+            photo: ticketPhoto,
         });
 
         const createdTicket = await newTicket.save();

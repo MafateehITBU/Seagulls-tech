@@ -29,10 +29,20 @@ export const createAccidentTicket = async (req, res) => {
         }
 
         let techTicketApprove = false;
+        let ticketPhoto = null;
         // Validate the opener
         if (openedByModel === 'Tech') {
             const tech = await Tech.findById(openedBy);
             if (!tech) return res.status(400).json({ message: "Invalid Tech ID" });
+            // check is the tech uploaded a photo
+            if (!req.file) {
+                return res.status(400).json({ message: "Photo is required" });
+            }
+            // Upload photo
+            const photoPath = req.file.path;
+            const photoUrl = await uploadToCloudinary(photoPath);
+            fs.unlinkSync(photoPath); // remove local file
+            ticketPhoto = photoUrl;
         } else if (openedByModel === 'Admin') {
             const admin = await Admin.findById(openedBy);
             techTicketApprove = true;
@@ -75,6 +85,7 @@ export const createAccidentTicket = async (req, res) => {
             assetId,
             description: description || "No description provided",
             techTicketApprove,
+            photo: ticketPhoto,
         });
 
         const createdTicket = await newTicket.save();
@@ -86,8 +97,8 @@ export const createAccidentTicket = async (req, res) => {
             spareParts,
             reportId: null,
             croca: {
-                crocaType: req.body.crocaType || "Croca",
-                cost: req.body.cost || "0",
+                crocaType: req.body.crocaType || null,
+                cost: req.body.cost || null,
                 photo: null,
             },
             status: 'Pending',
@@ -389,18 +400,26 @@ export const addReportToAccident = async (req, res) => {
         const createdReport = await report.save();
 
         accident.reportId = createdReport._id;
+        // check if the croca object is not null
+        if (accident.croca.crocaType && accident.croca.cost && accident.croca.photo) {
+            // check if the croca object is not null
+            accident.documents = true;
+        }
+
         await accident.save();
 
-        // Generate a unique notifID
-        const notifID = uuidv4(); // Generate a unique ID for the notification
+        if (accident.documents) {
+            // Generate a unique notifID
+            const notifID = uuidv4(); // Generate a unique ID for the notification
 
-        emitToAdmins('new-notification', {
-            notifID,
-            title: "Report Uploaded!",
-            message: 'A report has been Uploaded by a Tech',
-            route: "/accident",
-            createdAt: new Date(),
-        });
+            emitToAdmins('new-notification', {
+                notifID,
+                title: "Documents Uploaded!",
+                message: 'New documents has been Uploaded by a Tech',
+                route: "/accident",
+                createdAt: new Date(),
+            });
+        }
         res.json({ message: "Report added successfully" });
     } catch (error) {
         console.error(error);
@@ -468,7 +487,7 @@ export const addRejectReportToAccident = async (req, res) => {
         emitToAdmins('new-notification', {
             notifID,
             title: "Report Uploaded!",
-            message: 'A report has been Uploaded by a Tech',
+            message: 'A reject report has been Uploaded by a Tech',
             route: "/accident",
             createdAt: new Date(),
         });
@@ -541,17 +560,26 @@ export const addCrocaToAccident = async (req, res) => {
             accident.spareParts = spareParts;
         }
 
-        await accident.save();
-        // Generate a unique notifID
-        const notifID = uuidv4(); // Generate a unique ID for the notification
+        // check if the croca object is not null
+        if (accident.croca.crocaType && accident.croca.cost && accident.croca.photo) {
+            // check if the croca object is not null
+            accident.documents = true;
+        }
 
-        emitToAdmins('new-notification', {
-            notifID,
-            title: "Croca Uploaded!",
-            message: 'A Croca has been Uploaded by a Tech',
-            route: "/accident",
-            createdAt: new Date(),
-        });
+        await accident.save();
+
+        if (accident.documents) {
+            // Generate a unique notifID
+            const notifID = uuidv4(); // Generate a unique ID for the notification
+
+            emitToAdmins('new-notification', {
+                notifID,
+                title: "Documents Uploaded!",
+                message: 'New documents has been Uploaded by a Tech',
+                route: "/accident",
+                createdAt: new Date(),
+            });
+        }
 
         res.json({ message: "Croca added successfully" });
     } catch (error) {

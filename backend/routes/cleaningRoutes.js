@@ -13,7 +13,7 @@ import verifyToken from "../middleware/verifyToken.js";
 import authorizePosition from "../middleware/authorizePosition.js";
 
 const router = express.Router();
-router.post('/', verifyToken, createCleaningTicket); // Create a new cleaning ticket
+router.post('/', verifyToken, upload.single('ticketPhoto'), createCleaningTicket); // Create a new cleaning ticket
 router.get('/tech', verifyToken, authorizePosition('tech'), getCleaningTicketsByTech); // Get all cleaning tickets assigned to a specific tech
 router.post
     (

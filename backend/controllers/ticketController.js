@@ -426,6 +426,7 @@ export const getTechClosedTicketsNo = async (req, res) => {
 
         // Build result array with all techs
         const result = allTechs.map(tech => ({
+            id: tech._id,
             techName: tech.name,
             closedTicketsCount: closedCounts[tech._id.toString()] || 0
         }));

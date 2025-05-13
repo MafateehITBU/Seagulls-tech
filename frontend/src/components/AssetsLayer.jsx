@@ -30,6 +30,10 @@ const AssetsLayer = () => {
     const [editModalShow, setEditModalShow] = useState(false);
     const [selectedAssetDelete, setSelectedAssetDelete] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedType, setSelectedType] = useState('all');
+    const [selectedStatus, setSelectedStatus] = useState('all');
+    const [assetTypes, setAssetTypes] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -40,10 +44,29 @@ const AssetsLayer = () => {
         try {
             const response = await axiosInstance.get('/asset');
             setAssets(response.data);
+            // Extract unique asset types
+            const uniqueTypes = [...new Set(response.data.map(asset => asset.assetType).filter(Boolean))];
+            setAssetTypes(uniqueTypes);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
+
+    const handleTypeChange = (e) => {
+        setSelectedType(e.target.value);
+    };
+
+    const handleStatusChange = (e) => {
+        setSelectedStatus(e.target.value);
+    };
+
+    const filteredData = React.useMemo(() => {
+        return assets.filter(asset => {
+            const typeMatch = selectedType === 'all' || asset.assetType === selectedType;
+            const statusMatch = selectedStatus === 'all' || asset.assetStatus === selectedStatus;
+            return typeMatch && statusMatch;
+        });
+    }, [assets, selectedType, selectedStatus]);
 
     const handleDelete = async (asset) => {
         setSelectedAssetDelete(asset);
@@ -187,19 +210,77 @@ const AssetsLayer = () => {
         prepareRow,
         setGlobalFilter,
         state,
-    } = useTable({ columns, data: assets }, useGlobalFilter, useSortBy);
+    } = useTable({ columns, data: filteredData }, useGlobalFilter, useSortBy);
 
     return (
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                 <h5 className='card-title mb-0 flex-shrink-0 w-35 w-md-100 w-sm-100'>Assets</h5>
-                <div className="w-35 w-md-100 w-sm-100">
+                <div className="d-flex gap-2 w-35 w-md-100 w-sm-100 position-relative">
                     <GlobalFilter
                         globalFilter={state.globalFilter}
                         setGlobalFilter={setGlobalFilter}
                         className="form-control"
                     />
+                    <button 
+                        className="btn btn-outline-secondary position-relative"
+                        onClick={() => setShowFilters(!showFilters)}
+                    >
+                        <Icon icon="mdi:filter" width="20" height="20" />
+                        {(selectedType !== 'all' || selectedStatus !== 'all') && (
+                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {(selectedType !== 'all' ? 1 : 0) + (selectedStatus !== 'all' ? 1 : 0)}
+                            </span>
+                        )}
+                    </button>
+                    {showFilters && (
+                        <div className="position-absolute top-100 end-0 mt-2 p-3 bg-white border rounded shadow-sm" style={{ zIndex: 1000, minWidth: '250px' }}>
+                            <div className="mb-3">
+                                <label className="form-label">Asset Type</label>
+                                <select 
+                                    className="form-select" 
+                                    value={selectedType} 
+                                    onChange={handleTypeChange}
+                                >
+                                    <option value="all">All Types</option>
+                                    {assetTypes.map((type, index) => (
+                                        <option key={index} value={type}>{type}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Status</label>
+                                <select 
+                                    className="form-select" 
+                                    value={selectedStatus} 
+                                    onChange={handleStatusChange}
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div className="d-flex justify-content-end">
+                                <button 
+                                    className="btn btn-sm btn-secondary me-2"
+                                    onClick={() => {
+                                        setSelectedType('all');
+                                        setSelectedStatus('all');
+                                        setShowFilters(false);
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                                <button 
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => setShowFilters(false)}
+                                >
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <div className="w-35 w-md-100 w-sm-100">
                     <button

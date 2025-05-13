@@ -15,7 +15,7 @@ import verifyToken from "../middleware/verifyToken.js";
 import authorizePosition from "../middleware/authorizePosition.js";
 
 const router = express.Router();
-router.post('/', verifyToken, createMaintenanceTicket); // Create a new maintenance ticket
+router.post('/', verifyToken, upload.single('ticketPhoto'), createMaintenanceTicket); // Create a new maintenance ticket
 router.get('/tech', verifyToken, authorizePosition('tech'), getMaintTicketsTech); // Get all maintenance tickets assigned to a specific tech
 router.post
     (
