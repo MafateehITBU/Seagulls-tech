@@ -8,7 +8,7 @@ import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-30"
+        className="form-control w-100"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
         placeholder="Search Tickets..."
@@ -17,6 +17,9 @@ const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
 
 const TechnicianTicketLayer = () => {
     const [tickets, setTickets] = useState([]);
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedType, setSelectedType] = useState('all');
+    const [selectedPriority, setSelectedPriority] = useState('all');
 
     useEffect(() => {
         fetchData();
@@ -49,6 +52,22 @@ const TechnicianTicketLayer = () => {
             toast.error("Failed to fetch tickets.");
         }
     };
+
+    const handleTypeChange = (e) => {
+        setSelectedType(e.target.value);
+    };
+
+    const handlePriorityChange = (e) => {
+        setSelectedPriority(e.target.value);
+    };
+
+    const filteredData = React.useMemo(() => {
+        return tickets.filter(ticket => {
+            const typeMatch = selectedType === 'all' || ticket.type === selectedType;
+            const priorityMatch = selectedPriority === 'all' || ticket.ticketId?.priority === selectedPriority;
+            return typeMatch && priorityMatch;
+        });
+    }, [tickets, selectedType, selectedPriority]);
 
     const handleApprove = async (ticket) => {
         try {
@@ -84,7 +103,7 @@ const TechnicianTicketLayer = () => {
             Header: 'Priority',
             accessor: row => row.ticketId?.priority,
             Cell: ({ value }) => (
-                <span className={`badge ${value === 'High' ? 'bg-danger' : 'bg-secondary'}`}>
+                <span className={`badge ${value === 'High' ? 'bg-danger' : value === 'Medium' ? 'bg-warning' : 'bg-secondary'}`}>
                     {value}
                 </span>
             ),
@@ -126,7 +145,7 @@ const TechnicianTicketLayer = () => {
         setGlobalFilter,
         gotoPage,
     } = useTable(
-        { columns, data: tickets, initialState: { pageSize: 5 } },
+        { columns, data: filteredData, initialState: { pageSize: 5 } },
         useGlobalFilter,
         useSortBy,
         usePagination
@@ -137,8 +156,68 @@ const TechnicianTicketLayer = () => {
             <ToastContainer />
             <div className="card-header d-flex justify-content-between align-items-center">
                 <h5 className='card-title mb-0'>Technician Tickets</h5>
-
-                <GlobalFilter globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
+                <div className="d-flex gap-2 position-relative">
+                    <button 
+                        className="btn btn-outline-secondary position-relative"
+                        onClick={() => setShowFilters(!showFilters)}
+                    >
+                        <Icon icon="mdi:filter" width="20" height="20" />
+                        {(selectedType !== 'all' || selectedPriority !== 'all') && (
+                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {(selectedType !== 'all' ? 1 : 0) + (selectedPriority !== 'all' ? 1 : 0)}
+                            </span>
+                        )}
+                    </button>
+                    <GlobalFilter globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
+                    {showFilters && (
+                        <div className="position-absolute top-100 end-0 mt-2 p-3 bg-white border rounded shadow-sm" style={{ zIndex: 1000, minWidth: '250px' }}>
+                            <div className="mb-3">
+                                <label className="form-label">Type</label>
+                                <select 
+                                    className="form-select" 
+                                    value={selectedType} 
+                                    onChange={handleTypeChange}
+                                >
+                                    <option value="all">All Types</option>
+                                    <option value="cleaning">Cleaning</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="accident">Accident</option>
+                                </select>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Priority</label>
+                                <select 
+                                    className="form-select" 
+                                    value={selectedPriority} 
+                                    onChange={handlePriorityChange}
+                                >
+                                    <option value="all">All Priorities</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                            <div className="d-flex justify-content-end">
+                                <button 
+                                    className="btn btn-sm btn-secondary me-2"
+                                    onClick={() => {
+                                        setSelectedType('all');
+                                        setSelectedPriority('all');
+                                        setShowFilters(false);
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                                <button 
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => setShowFilters(false)}
+                                >
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
             <div className="card-body">
                 {tickets.length === 0 ? (

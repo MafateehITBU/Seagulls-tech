@@ -24,6 +24,13 @@ const CleaningLayer = () => {
     const [showModal, setShowModal] = useState(false); // State to manage modal visibility
     const [selectedTicketDelete, setSelectedTicketDelete] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedOpenedBy, setSelectedOpenedBy] = useState('all');
+    const [selectedAssignedTo, setSelectedAssignedTo] = useState('all');
+    const [selectedPriority, setSelectedPriority] = useState('all');
+    const [selectedStatus, setSelectedStatus] = useState('all');
+    const [openedByOptions, setOpenedByOptions] = useState([]);
+    const [assignedToOptions, setAssignedToOptions] = useState([]);
 
     useEffect(() => {
         fetchData();
@@ -36,10 +43,40 @@ const CleaningLayer = () => {
                 ? response.data.filter(ticket => ticket.ticketId?.techTicketApprove === true)
                 : [];
             setTickets(filtered);
+            // Extract unique Opened By Model and Assigned To
+            setOpenedByOptions([
+                ...new Set(filtered.map(t => t.ticketId?.openedByModel).filter(Boolean))
+            ]);
+            setAssignedToOptions([
+                ...new Set(filtered.map(t => t.ticketId?.assignedTo?.name).filter(Boolean))
+            ]);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
+
+    const handleOpenedByChange = (e) => {
+        setSelectedOpenedBy(e.target.value);
+    };
+    const handleAssignedToChange = (e) => {
+        setSelectedAssignedTo(e.target.value);
+    };
+    const handlePriorityChange = (e) => {
+        setSelectedPriority(e.target.value);
+    };
+    const handleStatusChange = (e) => {
+        setSelectedStatus(e.target.value);
+    };
+
+    const filteredData = React.useMemo(() => {
+        return tickets.filter(ticket => {
+            const openedByMatch = selectedOpenedBy === 'all' || ticket.ticketId?.openedByModel === selectedOpenedBy;
+            const assignedToMatch = selectedAssignedTo === 'all' || ticket.ticketId?.assignedTo?.name === selectedAssignedTo;
+            const priorityMatch = selectedPriority === 'all' || ticket.ticketId?.priority === selectedPriority;
+            const statusMatch = selectedStatus === 'all' || ticket.ticketId?.status === selectedStatus;
+            return openedByMatch && assignedToMatch && priorityMatch && statusMatch;
+        });
+    }, [tickets, selectedOpenedBy, selectedAssignedTo, selectedPriority, selectedStatus]);
 
     const handleDelete = async (cleaning) => {
         setSelectedTicketDelete(cleaning);
@@ -167,7 +204,7 @@ const CleaningLayer = () => {
         setGlobalFilter,
         gotoPage,
     } = useTable(
-        { columns, data: tickets, initialState: { pageSize: 5 } },
+        { columns, data: filteredData, initialState: { pageSize: 5 } },
         useGlobalFilter,
         useSortBy,
         usePagination
@@ -178,12 +215,71 @@ const CleaningLayer = () => {
             <ToastContainer />
             <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                 <h5 className='card-title mb-0 flex-shrink-0 w-35 w-md-100 w-sm-100'>Cleaning Tickets</h5>
-                <div className="w-35 w-md-100 w-sm-100">
-                    <GlobalFilter
-                        globalFilter={globalFilter}
-                        setGlobalFilter={setGlobalFilter}
-                        className="form-control"
-                    />
+                <div className="d-flex gap-2 position-relative w-35 w-md-100 w-sm-100">
+                    <button 
+                        className="btn btn-outline-secondary position-relative"
+                        onClick={() => setShowFilters(!showFilters)}
+                    >
+                        <Icon icon="mdi:filter" width="20" height="20" />
+                        {(selectedOpenedBy !== 'all' || selectedAssignedTo !== 'all' || selectedPriority !== 'all' || selectedStatus !== 'all') && (
+                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {(selectedOpenedBy !== 'all' ? 1 : 0) + (selectedAssignedTo !== 'all' ? 1 : 0) + (selectedPriority !== 'all' ? 1 : 0) + (selectedStatus !== 'all' ? 1 : 0)}
+                            </span>
+                        )}
+                    </button>
+                    <GlobalFilter globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
+                    {showFilters && (
+                        <div className="position-absolute top-100 end-0 mt-2 p-3 bg-white border rounded shadow-sm" style={{ zIndex: 1000, minWidth: '250px' }}>
+                            <div className="mb-3">
+                                <label className="form-label">Opened By</label>
+                                <select className="form-select" value={selectedOpenedBy} onChange={handleOpenedByChange}>
+                                    <option value="all">All</option>
+                                    {openedByOptions.map((model, idx) => (
+                                        <option key={idx} value={model}>{model}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Assigned To</label>
+                                <select className="form-select" value={selectedAssignedTo} onChange={handleAssignedToChange}>
+                                    <option value="all">All</option>
+                                    {assignedToOptions.map((name, idx) => (
+                                        <option key={idx} value={name}>{name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Priority</label>
+                                <select className="form-select" value={selectedPriority} onChange={handlePriorityChange}>
+                                    <option value="all">All</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Status</label>
+                                <select className="form-select" value={selectedStatus} onChange={handleStatusChange}>
+                                    <option value="all">All</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Open">Open</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Closed">Closed</option>
+                                </select>
+                            </div>
+                            <div className="d-flex justify-content-end">
+                                <button className="btn btn-sm btn-secondary me-2" onClick={() => {
+                                    setSelectedOpenedBy('all');
+                                    setSelectedAssignedTo('all');
+                                    setSelectedPriority('all');
+                                    setSelectedStatus('all');
+                                    setShowFilters(false);
+                                }}>Clear</button>
+                                <button className="btn btn-sm btn-primary" onClick={() => setShowFilters(false)}>Apply</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <div className="w-35 w-md-100 w-sm-100">
                     <button

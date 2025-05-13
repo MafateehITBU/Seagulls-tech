@@ -23,9 +23,12 @@ const SparePartLayer = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedSparePart, setSelectedSparePart] = useState(null);
     const [editModalShow, setEditModalShow] = useState(false);
-    const [selectedSparePartEdit, setSelectedSparePartEdit] = useState(null); // for Edit Modal
+    const [selectedSparePartEdit, setSelectedSparePartEdit] = useState(null);
     const [selectedSparePartDelete, setSelectedSparePartDelete] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedVendor, setSelectedVendor] = useState('all');
+    const [vendors, setVendors] = useState([]);
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -35,10 +38,23 @@ const SparePartLayer = () => {
         try {
             const response = await axiosInstance.get('/sparepart');
             setSpareParts(response.data);
+            const uniqueVendors = [...new Set(response.data.map(part => part.vendorName).filter(Boolean))];
+            setVendors(uniqueVendors);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
+
+    const handleVendorChange = (e) => {
+        setSelectedVendor(e.target.value);
+    };
+
+    const filteredData = React.useMemo(() => {
+        if (selectedVendor === 'all') {
+            return spareParts;
+        }
+        return spareParts.filter(part => part.vendorName === selectedVendor);
+    }, [spareParts, selectedVendor]);
 
     const handleDelete = async (sparePart) => {
         setSelectedSparePartDelete(sparePart);
@@ -136,19 +152,64 @@ const SparePartLayer = () => {
         prepareRow,
         setGlobalFilter,
         state,
-    } = useTable({ columns, data: spareParts }, useGlobalFilter, useSortBy);
+    } = useTable({ columns, data: filteredData }, useGlobalFilter, useSortBy);
 
     return (
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                 <h5 className='card-title mb-0 flex-shrink-0 w-35 w-md-100 w-sm-100'>Spare Parts</h5>
-                <div className="w-35 w-md-100 w-sm-100">
+                <div className="d-flex gap-2 w-35 w-md-100 w-sm-100 position-relative">
                     <GlobalFilter
                         globalFilter={state.globalFilter}
                         setGlobalFilter={setGlobalFilter}
                         className="form-control"
                     />
+                    <button 
+                        className="btn btn-outline-secondary position-relative"
+                        onClick={() => setShowFilters(!showFilters)}
+                    >
+                        <Icon icon="mdi:filter" width="20" height="20" />
+                        {selectedVendor !== 'all' && (
+                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                1
+                            </span>
+                        )}
+                    </button>
+                    {showFilters && (
+                        <div className="position-absolute top-100 end-0 mt-2 p-3 bg-white border rounded shadow-sm" style={{ zIndex: 1000, minWidth: '250px' }}>
+                            <div className="mb-3">
+                                <label className="form-label">Vendor Filter</label>
+                                <select 
+                                    className="form-select" 
+                                    value={selectedVendor} 
+                                    onChange={handleVendorChange}
+                                >
+                                    <option value="all">All Vendors</option>
+                                    {vendors.map((vendor, index) => (
+                                        <option key={index} value={vendor}>{vendor}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="d-flex justify-content-end">
+                                <button 
+                                    className="btn btn-sm btn-secondary me-2"
+                                    onClick={() => {
+                                        setSelectedVendor('all');
+                                        setShowFilters(false);
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                                <button 
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => setShowFilters(false)}
+                                >
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <div className="w-35 w-md-100 w-sm-100">
                     <button

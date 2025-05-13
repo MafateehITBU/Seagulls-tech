@@ -10,7 +10,7 @@ import CrocaReportModal from '../modals/Accident/CrocaReportModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
     <input
-        className="form-control w-30"
+        className="form-control w-100"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
         placeholder="Search Accident Tickets..."
@@ -22,7 +22,9 @@ const AccidentLayer = () => {
     const [selectedReport, setSelectedReport] = useState(null);
     const [selectedCroca, setSelectedCroca] = useState(null);
     const [showCrocaModal, setShowCrocaModal] = useState(false);
-
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedPriority, setSelectedPriority] = useState('all');
+    const [selectedOpenedBy, setSelectedOpenedBy] = useState('all');
 
     useEffect(() => {
         fetchData();
@@ -36,6 +38,22 @@ const AccidentLayer = () => {
             console.error('Error fetching data:', error);
         }
     };
+
+    const handlePriorityChange = (e) => {
+        setSelectedPriority(e.target.value);
+    };
+
+    const handleOpenedByChange = (e) => {
+        setSelectedOpenedBy(e.target.value);
+    };
+
+    const filteredData = React.useMemo(() => {
+        return tickets.filter(ticket => {
+            const priorityMatch = selectedPriority === 'all' || ticket.ticketId?.priority === selectedPriority;
+            const openedByMatch = selectedOpenedBy === 'all' || ticket.ticketId?.openedByModel === selectedOpenedBy;
+            return priorityMatch && openedByMatch;
+        });
+    }, [tickets, selectedPriority, selectedOpenedBy]);
 
     const columns = React.useMemo(() => [
         {
@@ -62,7 +80,7 @@ const AccidentLayer = () => {
             Header: 'Priority',
             accessor: row => row.ticketId?.priority,
             Cell: ({ value }) => (
-                <span className={`badge ${value === 'High' ? 'bg-danger' : 'bg-secondary'}`}>
+                <span className={`badge ${value === 'High' ? 'bg-danger' : value === 'Medium' ? 'bg-warning' : 'bg-secondary'}`}>
                     {value}
                 </span>
             ),
@@ -166,16 +184,74 @@ const AccidentLayer = () => {
         prepareRow,
         setGlobalFilter,
         state,
-    } = useTable({ columns, data: tickets }, useGlobalFilter, useSortBy);
+    } = useTable({ columns, data: filteredData }, useGlobalFilter, useSortBy);
 
     return (
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header d-flex justify-content-between align-items-center">
                 <h5 className='card-title mb-0'>Closed Accident Tickets</h5>
-
-                <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
-
+                <div className="d-flex gap-2 position-relative">
+                    <button 
+                        className="btn btn-outline-secondary position-relative"
+                        onClick={() => setShowFilters(!showFilters)}
+                    >
+                        <Icon icon="mdi:filter" width="20" height="20" />
+                        {(selectedPriority !== 'all' || selectedOpenedBy !== 'all') && (
+                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {(selectedPriority !== 'all' ? 1 : 0) + (selectedOpenedBy !== 'all' ? 1 : 0)}
+                            </span>
+                        )}
+                    </button>
+                    <GlobalFilter globalFilter={state.globalFilter} setGlobalFilter={setGlobalFilter} />
+                    {showFilters && (
+                        <div className="position-absolute top-100 end-0 mt-2 p-3 bg-white border rounded shadow-sm" style={{ zIndex: 1000, minWidth: '250px' }}>
+                            <div className="mb-3">
+                                <label className="form-label">Priority</label>
+                                <select 
+                                    className="form-select" 
+                                    value={selectedPriority} 
+                                    onChange={handlePriorityChange}
+                                >
+                                    <option value="all">All Priorities</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label">Opened By</label>
+                                <select 
+                                    className="form-select" 
+                                    value={selectedOpenedBy} 
+                                    onChange={handleOpenedByChange}
+                                >
+                                    <option value="all">All Users</option>
+                                    <option value="Tech">Tech</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                            <div className="d-flex justify-content-end">
+                                <button 
+                                    className="btn btn-sm btn-secondary me-2"
+                                    onClick={() => {
+                                        setSelectedPriority('all');
+                                        setSelectedOpenedBy('all');
+                                        setShowFilters(false);
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                                <button 
+                                    className="btn btn-sm btn-primary"
+                                    onClick={() => setShowFilters(false)}
+                                >
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
             <div className="card-body">
                 {tickets.length === 0 ? (
